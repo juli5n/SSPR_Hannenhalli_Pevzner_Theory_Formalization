@@ -317,5 +317,6 @@ def result_UP3 := unsignedPermutationFromSigned test_SP3
   result_UP3.symm (result_UP3 x)
 )
 
+def test := "Hallo"
 
 end SSPRHannenhalliPevznerTheory.Basic
