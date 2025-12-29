@@ -108,25 +108,25 @@ def TwoColoredGraph.fullGraph {n : ℕ} (two_colored_graph : TwoColoredGraph (n 
 
 namespace BreakpointGraph
 
-  def isConsecutive {n : ℕ} (a b : Fin n) : Prop :=
-    a.val = b.val + 1 ∨ b.val = a.val + 1
+def isConsecutive {n : ℕ} (a b : Fin n) : Prop :=
+a.val = b.val + 1 ∨ b.val = a.val + 1
 
-  def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n) :=
-    {
-      blackEdgesGraph := {
-        Adj (x : Fin n) (y : Fin n) :=
-          (isConsecutive x y) ∧ (¬ isConsecutive (σ x) (σ y))
-        symm := by dsimp only [isConsecutive]; tauto
-        loopless := by dsimp only [Irreflexive, isConsecutive]; omega
-      }
-      grayEdgesGraph := {
-        Adj (x : Fin n) (y : Fin n) :=
-          (isConsecutive (σ x) (σ y)) ∧ (¬ isConsecutive x y)
-        symm := by dsimp only [isConsecutive]; tauto
-        loopless := by dsimp only [Irreflexive, isConsecutive]; omega
-      }
-
+def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n) :=
+{
+    blackEdgesGraph := {
+    Adj (x : Fin n) (y : Fin n) :=
+        (isConsecutive x y) ∧ (¬ isConsecutive (σ x) (σ y))
+    symm := by dsimp only [isConsecutive]; tauto
+    loopless := by dsimp only [Irreflexive, isConsecutive]; omega
     }
+    grayEdgesGraph := {
+    Adj (x : Fin n) (y : Fin n) :=
+        (isConsecutive (σ x) (σ y)) ∧ (¬ isConsecutive x y)
+    symm := by dsimp only [isConsecutive]; tauto
+    loopless := by dsimp only [Irreflexive, isConsecutive]; omega
+    }
+
+}
 
 
 
@@ -155,20 +155,9 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
 
 end CycleGraph
 
-example (σ : Equiv.Perm (Fin n)) :
-  (BreakpointGraph.fromPermutation σ).blackEdgesGraph ≤
-  (CycleGraph.fromPermutation σ).blackEdgesGraph := by sorry
-
-example (σ : Equiv.Perm (Fin n)) :
-  (BreakpointGraph.fromPermutation σ).grayEdgesGraph ≤
-  (CycleGraph.fromPermutation σ).grayEdgesGraph := by sorry
-
-example (σ : Equiv.Perm (Fin n)) :
-  (BreakpointGraph.fromPermutation σ).fullGraph ≤
-  (CycleGraph.fromPermutation σ).fullGraph := by sorry
 
 
-def unsignedPermutationFromSigned {n : ℕ}
+def UnsignedPermutation.fromSigned {n : ℕ}
 (signed_permutation : SignedPermutation (n := n)) :
 Equiv.Perm (Fin (2*n)) :=
   {
@@ -279,6 +268,18 @@ Equiv.Perm (Fin (2*n)) :=
     right_inv := by sorry
   }
 
+example {n : ℕ} (σ : SignedPermutation n) :
+  (BreakpointGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).blackEdgesGraph ≤
+  (CycleGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).blackEdgesGraph := by sorry
+
+example {n : ℕ} (σ : SignedPermutation n) :
+  (BreakpointGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).grayEdgesGraph ≤
+  (CycleGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).grayEdgesGraph := by sorry
+
+example {n : ℕ} (σ : SignedPermutation n) :
+  (BreakpointGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).fullGraph ≤
+  (CycleGraph.fromPermutation (UnsignedPermutation.fromSigned σ)).fullGraph := by sorry
+
 def test_SP1 : SignedPermutation 4 := {
   values := Equiv.refl (Fin 4)
   signs := fun _ ↦ Sign.positive
@@ -293,9 +294,9 @@ def test_SP3 : SignedPermutation 4 := {
   signs := fun _ ↦ Sign.positive
 }
 
-def result_UP1 := unsignedPermutationFromSigned test_SP1
-def result_UP2 := unsignedPermutationFromSigned test_SP2
-def result_UP3 := unsignedPermutationFromSigned test_SP3
+def result_UP1 := UnsignedPermutation.fromSigned test_SP1
+def result_UP2 := UnsignedPermutation.fromSigned test_SP2
+def result_UP3 := UnsignedPermutation.fromSigned test_SP3
 
 
 #eval! (List.range 8).map (fun i => result_UP1 (Fin.ofNat (2*4) i))
