@@ -202,11 +202,47 @@ def UnsignedRepresentationOfSP.property' {n : ℕ}
 #check Fin.induction
 
 
+def partner {n : ℕ} (x : Fin (2*n)) : Fin (2*n) :=
+  ⟨if x.val % 2 = 0 then x.val + 1 else x.val - 1, by split <;> omega⟩
+
+def partner.samePairIndex {n : ℕ} (x : Fin (2*n)) : ((x/2) : ℕ) = ((partner x)/2 : ℕ) := by
+  unfold partner
+  split
+  <;> simp only
+  <;> omega
+
+def partner.notEq {n : ℕ} (x : Fin (2 * n)) : x ≠ (partner x) := by
+  apply Fin.ne_of_val_ne
+  unfold partner
+  split
+  <;> simp only
+  <;> omega
+
+def UnsignedRepresentationOfSP.imagesOfPairConsecutive
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
+  isConsecutive (representation.val i) (representation.val (partner i)) :=
+  representation.property' i (partner i) (partner.notEq i) (partner.samePairIndex i)
+
+theorem partner.involutive {n : ℕ} : Function.Involutive (partner (n := n)) := by
+  intro x
+  apply Fin.eq_of_val_eq
+  unfold partner
+  simp only
+  split_ifs with h1 h2
+  <;> omega
+
+#check congrArg
+
+theorem partner.eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
+  partner x = y ↔ x = partner y :=
+  Function.Involutive.eq_iff partner.involutive
+
+
 def minOfPairIsEvenHelper
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
 ∀ (y₀ : Fin (2*n)),
   let x₀ := representation.val.symm y₀
-  let x₁ : Fin (2*n) := ⟨if x₀.val % 2 = 0 then x₀.val + 1 else x₀.val - 1, by split <;> omega⟩
+  let x₁ := partner x₀
   let y₁ := representation.val x₁
   Even (min y₀.val y₁.val) := by
   intro y₀
@@ -223,34 +259,33 @@ def minOfPairIsEvenHelper
     intro x₀ x₁ y₁
 
 
-    have y₀_eq_representation_apply_x₀ : y₀ = representation.val x₀ :=
+    have y₀_eq_image_x₀ : y₀ = representation.val x₀ :=
       (Equiv.symm_apply_eq representation.val).mp rfl
 
 
-    let pair_index_x₀ : ℕ := x₀ / 2
-    let pair_index_x₁ : ℕ := x₁ / 2
+    -- let pair_index_x₀ : ℕ := x₀ / 2
+    -- let pair_index_x₁ : ℕ := x₁ / 2
 
-    have same_pair_index :pair_index_x₀ = pair_index_x₁ := by
-      dsimp [pair_index_x₀, pair_index_x₁, x₀, x₁]
-      split <;> omega
+    -- have same_pair_index :pair_index_x₀ = pair_index_x₁ := by
+    --   dsimp [pair_index_x₀, pair_index_x₁, x₀, x₁]
+    --   split <;> omega
 
-    have x₀_neq_x₁ : x₀ ≠ x₁ := by
-      apply Fin.ne_of_val_ne
-      dsimp [x₀, x₁]
-      split_ifs with h1
-      <;> omega
+    have x₀_neq_x₁ : x₀ ≠ x₁ := partner.notEq x₀
+
 
     have y₀_y₁_consecutive : isConsecutive y₀ y₁ := by
-      have := representation.property' x₀ x₁ x₀_neq_x₁ same_pair_index
-      rw [y₀_eq_representation_apply_x₀]
+      have := representation.imagesOfPairConsecutive x₀
+      rw [← y₀_eq_image_x₀] at this
       exact this
 
+
     let min := min (i + 1) y₁.val
+    unfold isConsecutive at y₀_y₁_consecutive
     obtain min_is_y₁|min_is_ip1 := (min_choice (i+1) y₁).symm
 
     -- If y₁ is the minimum, then y₁ must be i and we can apply
     -- the induction hypothesis
-    · unfold isConsecutive at y₀_y₁_consecutive
+    ·
       have y₁_eq_i : y₁ = i := by omega
 
       specialize induction_hypothesis y₁ y₁_eq_i
@@ -263,23 +298,123 @@ def minOfPairIsEvenHelper
         Equiv.symm_apply_apply representation.val x₁
       simp only [preimage_y₁_eq_x₁] at induction_hypothesis
 
-      have x₀_eq_pair_neighbor_of_x₁ : x₀ = if x₁.val % 2 = 0 then x₁.val + 1 else x₁.val - 1 := by
-        split_ifs with h1
-        <;> omega
-      simp only [← x₀_eq_pair_neighbor_of_x₁, Fin.eta] at induction_hypothesis
-      have image_x₀_eq_y₀ : representation.val x₀ = y₀ :=
-        Eq.symm y₀_eq_representation_apply_x₀
+      have x₀_eq_partner_x₁ : x₀ = partner x₁ := by
+        have : x₁ = partner x₀ := rfl
+        exact partner.eq_iff.mp this
 
-      rw [image_x₀_eq_y₀] at induction_hypothesis
+      rw [← y₁_eq_i] at induction_hypothesis
+      rw [← x₀_eq_partner_x₁] at induction_hypothesis
 
-
-      -- !!I AM WORKING ON THIS PART!!
+      rw [← y₀_eq_image_x₀] at induction_hypothesis
 
 
-      sorry
-    · by_contra min_is_odd
+      rw [← h, min_comm]
+      exact induction_hypothesis
+
+
+    -- Case: y₀ (=i+1) is minimum and y₁=i+2
+    · have y₁_eq_y₀p1 : y₁ = i + 2 := by omega
+      -- Assume the minimum y₀ is odd
+      by_contra min_is_odd
       rw [Nat.not_even_iff_odd] at min_is_odd
-      sorry
+
+      -- Since y₀ is odd, y₀-1=i must be even
+      have i_is_even : Even i := by
+        rw [min_is_ip1] at min_is_odd
+        rw [← Nat.not_even_iff_odd] at min_is_odd
+        rw [Nat.even_add_one] at min_is_odd
+        exact of_not_not min_is_odd
+
+      --
+      have i_le_2n : i < 2*n := by omega
+      let i_as_fin_2n : Fin (2*n) := ⟨i, i_le_2n⟩
+
+      specialize induction_hypothesis i_as_fin_2n rfl
+
+      let y₀' := i_as_fin_2n
+      let x₀' := (Equiv.symm representation.val) i_as_fin_2n
+      let x₁' : Fin (2*n) := partner x₀'
+      let y₁' := representation.val x₁'
+
+      dsimp only at induction_hypothesis
+
+      change Even (Min.min y₀'.val y₁'.val) at induction_hypothesis
+
+      have image_x₀'_is_y₀' : representation.val x₀' = y₀' :=
+        Equiv.apply_symm_apply representation.val i_as_fin_2n
+
+      have y₀'_y₁'_consecutive : isConsecutive (representation.val x₀') y₁' :=
+        (representation.imagesOfPairConsecutive x₀')
+      rw [image_x₀'_is_y₀'] at y₀'_y₁'_consecutive
+
+      unfold isConsecutive at *
+      rw [← h] at min_is_ip1
+
+
+      -- Since the minimum of y₀' y₁' is even after the induction hypothesis
+      -- and y₀'=i is even, the minimum of y₀' and y₁' must be y₀'
+
+      have min_y₀'_y₁'_is_y₀': (Min.min y₀' y₁') = y₀' := by
+        by_contra min_y₀'_y₁'_is_y₁'
+        replace min_y₀'_y₁'_is_y₁' := Or.resolve_left (min_choice y₀' y₁') min_y₀'_y₁'_is_y₁'
+
+        have y₁'_le_y₀' : y₁' ≤ y₀' := by
+          have := min_le_left y₀' y₁'
+          rw [min_y₀'_y₁'_is_y₁'] at this
+          exact this
+
+        have y₀'_eq_y₁'p1: y₀'.val = y₁'.val + 1 := by omega
+
+        have y₁'_is_odd: Odd y₁'.val := by
+          have : Even y₀'.val := by assumption
+          rw [y₀'_eq_y₁'p1] at this
+          exact Nat.not_even_iff_odd.mp (Nat.even_add_one.mp this)
+
+        rw [← min_y₀'_y₁'_is_y₁'] at y₁'_is_odd
+        rw [← Nat.not_even_iff_odd] at y₁'_is_odd
+        contradiction
+
+      have y₀'_le_y₁' : y₀' ≤ y₁' := by
+        have := min_le_right y₀' y₁'
+        rw [min_y₀'_y₁'_is_y₀'] at this
+        exact this
+
+      have y₁'_eq_y₀'p1: y₁'.val = y₀'.val + 1 := by omega
+
+      have y₁'_eq_y₀ : y₁' = y₀ := by
+        apply Fin.eq_of_val_eq
+        change y₁'.val = i + 1 at y₁'_eq_y₀'p1
+        rw [← h] at y₁'_eq_y₀'p1
+        exact y₁'_eq_y₀'p1
+
+      -- We now have:
+      -- i   = y₀'
+      -- i+1 = y₀ = y₁'
+      -- i+2 = y₁
+      -- But at the same time we have:
+      -- y₀' = image (pair (preimage y₀)) and
+      -- y₁ = image (pair (preimage y₀))
+      -- Therefore y₀' = y₁, a contradiction
+      have : i = i+2 :=
+        calc
+        i = y₀' := by rfl
+        _ = representation.val x₀' := by exact Fin.val_eq_of_eq image_x₀'_is_y₀'.symm
+        _ = representation.val (partner x₁') := by
+          rw [← partner.eq_iff.mpr (show x₁' = partner x₀' by rfl)]
+        _ = representation.val (partner (representation.val.symm y₁')) := by
+          have : y₁' = representation.val x₁' := rfl
+          rw [(Equiv.symm_apply_eq representation.val).mpr this]
+        _ = representation.val (partner (representation.val.symm y₀)) := by rw [y₁'_eq_y₀]
+        _ = representation.val (partner (x₀)) := by rfl
+        _ = representation.val (x₁) := rfl
+        _ = y₁ := rfl
+        _ = i + 2 := by exact y₁_eq_y₀p1
+
+
+      linarith
+
+
+
 
 
 
