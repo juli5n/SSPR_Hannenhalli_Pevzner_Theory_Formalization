@@ -140,22 +140,23 @@ isConsecutive a b ↔ isConsecutive b a := by
 namespace BreakpointGraph
 
 
+
 def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n) :=
-{
+  {
     blackEdgesGraph := {
-    Adj (x : Fin n) (y : Fin n) :=
+      Adj (x : Fin n) (y : Fin n) :=
         (isConsecutive x y) ∧ (¬ isConsecutive (σ x) (σ y))
-    symm := by dsimp only [isConsecutive]; tauto
-    loopless := by dsimp only [Irreflexive, isConsecutive]; omega
+      symm := by dsimp only [isConsecutive]; tauto
+      loopless := by dsimp only [Irreflexive, isConsecutive]; omega
     }
     grayEdgesGraph := {
-    Adj (x : Fin n) (y : Fin n) :=
+      Adj (x : Fin n) (y : Fin n) :=
         (isConsecutive (σ x) (σ y)) ∧ (¬ isConsecutive x y)
-    symm := by dsimp only [isConsecutive]; tauto
-    loopless := by dsimp only [Irreflexive, isConsecutive]; omega
+      symm := by dsimp only [isConsecutive]; tauto
+      loopless := by dsimp only [Irreflexive, isConsecutive]; omega
     }
 
-}
+  }
 
 
 
@@ -164,7 +165,7 @@ end BreakpointGraph
 
 namespace CycleGraph
 
-def isPaired (x : Fin n) (y : Fin n) :=
+def isPaired {n : ℕ} (x : Fin n) (y : Fin n) :=
   (¬ x = y) ∧ (x.val / 2 = y.val / 2)
 
 def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
@@ -492,7 +493,7 @@ Equiv.Perm (Fin (2*n)) :=
       let base_index : Fin n := inverse_of_up_of_sp cor_signed_permutation_index
 
       let sign_at_base_index := signed_permutation.signs base_index
-      let index_within_pair : ℕ := (i +  sign_at_base_index.flip.toZeroOne) % 2
+      let index_within_pair : ℕ := (i + sign_at_base_index.flip.toZeroOne) % 2
 
       ⟨base_index * 2 + index_within_pair, by omega⟩
 
@@ -555,7 +556,68 @@ Equiv.Perm (Fin (2*n)) :=
           apply Fin.eq_of_val_eq
           simp only [x_val_eq_2k_p_1]
           omega
-    right_inv := by sorry
+    right_inv := by
+      dsimp only [List.getElem_toArray]
+      intro y
+
+      obtain y_even | y_odd := Nat.even_or_odd y.val
+      · obtain ⟨k, y_val_eq_2k⟩ := y_even
+        have simplify_base_index_calculation : (k + k) / 2 = k := by omega
+        have kpk_mod_2_eq_0 (k : ℕ): (k + k) % 2 = 0 := by omega
+        have kpkp1_mod_2_eq_1 (k : ℕ): (k + k + 1) % 2 = 1 := by omega
+        have k_mul_2_p1_div2(k : ℕ): (k * 2 + 1) / 2 = k := by omega
+        cases sign_at_base_index_case :
+          (signed_permutation.signs ((Equiv.symm signed_permutation.values) ⟨y.val / 2, by omega⟩))
+        · simp only [sign_at_base_index_case]
+          simp only [Sign.flip, Sign.toZeroOne]
+          simp only [y_val_eq_2k] at ⊢ sign_at_base_index_case
+          norm_num
+          simp only [simplify_base_index_calculation, kpk_mod_2_eq_0] at ⊢ sign_at_base_index_case
+          norm_num
+          rw [← Fin.val_eq_val]
+          dsimp
+          simp only [sign_at_base_index_case]
+          norm_num
+          simp only [y_val_eq_2k]
+          exact Nat.mul_two k
+        · simp only [sign_at_base_index_case]
+          simp only [Sign.flip, Sign.toZeroOne]
+          simp only [y_val_eq_2k] at ⊢ sign_at_base_index_case
+          simp only [simplify_base_index_calculation, kpkp1_mod_2_eq_1, k_mul_2_p1_div2]
+            at ⊢ sign_at_base_index_case
+          simp only [sign_at_base_index_case]
+          norm_num
+          rw [← Fin.val_eq_val]
+          dsimp
+          have (k : ℕ): (k * 2 + 1 + 1)%2 = 0 := by omega
+          simp only [this]
+          dsimp
+          omega
+      · obtain ⟨k, y_val_eq_2k⟩ := y_odd
+        have simplify_base_index_calculation (m : ℕ) : (2 * m + 1) / 2 = m := by omega
+        have simplify_base_index_calculation' (m : ℕ) : (m * 2 + 1) / 2 = m := by omega
+        rw [← Fin.val_eq_val]
+        cases sign_at_base_index_case :
+          (signed_permutation.signs ((Equiv.symm signed_permutation.values) ⟨y.val / 2, by omega⟩))
+        · simp only [sign_at_base_index_case]
+          simp only [Sign.flip, Sign.toZeroOne]
+          simp only [y_val_eq_2k] at ⊢ sign_at_base_index_case
+          norm_num
+          simp only [simplify_base_index_calculation, simplify_base_index_calculation']
+            at ⊢ sign_at_base_index_case
+          simp only [sign_at_base_index_case]
+          norm_num
+          rw [mul_comm]
+        · simp only [sign_at_base_index_case]
+          simp only [Sign.flip, Sign.toZeroOne]
+          simp only [y_val_eq_2k] at ⊢ sign_at_base_index_case
+          simp only [simplify_base_index_calculation] at ⊢ sign_at_base_index_case
+          have (k : ℕ): (2 * k + 1 + 1) % 2 = 0 := by omega
+          simp only [this]
+          norm_num
+          simp only [sign_at_base_index_case]
+          norm_num
+          rw [mul_comm]
   }
 
 def SignedPermutation.toUnsigned {n : ℕ}
