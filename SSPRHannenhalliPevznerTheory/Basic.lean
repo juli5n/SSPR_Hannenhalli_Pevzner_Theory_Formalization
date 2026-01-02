@@ -238,7 +238,7 @@ theorem partner.eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
   Function.Involutive.eq_iff partner.involutive
 
 
-def minOfPairIsEvenHelper
+theorem minOfPairIsEvenHelper
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
 ∀ (y₀ : Fin (2*n)),
   let x₀ := representation.val.symm y₀
@@ -257,7 +257,6 @@ def minOfPairIsEvenHelper
       exact Nat.even_iff.mpr this
   | succ i induction_hypothesis =>
     intro x₀ x₁ y₁
-
 
     have y₀_eq_image_x₀ : y₀ = representation.val x₀ :=
       (Equiv.symm_apply_eq representation.val).mp rfl
@@ -418,59 +417,31 @@ def minOfPairIsEvenHelper
 
 
 
-def UnsignedRepresentationOfSP.minOfPairIsEven
+theorem UnsignedRepresentationOfSP.minOfPairIsEven
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
 ∀ (i : Fin n),
-let first : Fin (2*n) := representation.val ⟨2*i, by omega⟩
-let second : Fin (2*n) := representation.val ⟨2*i+1, by omega⟩
-Even (min first second).val := by
-  by_cases n_eq_0_case : n = 0
-  · intro i; have := i.isLt; linarith
+let y₀ : Fin (2*n) := representation.val ⟨2*i, by omega⟩
+let y₁ : Fin (2*n) := representation.val ⟨2*i+1, by omega⟩
+Even (min y₀.val y₁.val) := by
+  intro i y₀ y₁
+  let x₀ : Fin (2*n) := ⟨2*i, by omega⟩
+  let x₁ : Fin (2*n) := ⟨2*i+1, by omega⟩
 
-  have n_positive : 0 < n := Nat.pos_of_ne_zero n_eq_0_case
+  have partner_x₀_eq_x₁ : partner x₀ = x₁ := by
+    apply Fin.eq_of_val_eq
+    unfold partner
+    simp [x₀, x₁]
 
-  let min_of_corresponding_pair_even (y : Fin (2*n)) : Prop :=
-    let x₀ := representation.val.symm y
-    let x₁ : Fin (2*n) := ⟨x₀ + ((x₀.val + 1) % 2), by omega⟩
-    Even (min y.val (representation.val x₁).val)
+  have preimage_y₀_is_x₀: representation.val.symm y₀ = x₀ := by
+    rw [Equiv.symm_apply_eq]
 
-
-  have induction_step : ∀ (i : Fin (2*n)),
-    (∀ (j : Fin (2*n)), j < i → min_of_corresponding_pair_even j) →
-    min_of_corresponding_pair_even i := by
-    intro i induction_requirement
-    by_cases i_eq_0 : i.val = 0
-    · unfold min_of_corresponding_pair_even
-      intro x₀ x₁
-      have : min i.val (representation.val x₁).val = 0 := by
-        apply le_antisymm
-        · exact (le_trans
-            (min_le_left i.val (representation.val x₁))
-            (show i.val ≤ 0 by rw [i_eq_0])
-          )
-        · exact Nat.zero_le (min ↑i ↑(representation.val x₁))
-      rw [this]
-      exact Nat.even_iff.mpr rfl
-    · sorry
-
-    -- Beweis per Induktion:
-    -- Für 0 ist dies klar
-    -- Für n > 0: Angenommen das Minimum von representation x₀ und representation x₁
-    -- wäre nicht gerade.
-    -- Dann ist das minimum m ungerade
-    -- Dann ist m-1 gerade
-    -- Nach induktionsvoraussetzung ist m-1 in einem Paar enthalten dessen minimum
-    -- gerade ist.
-    -- Dann muss m-1 aber mit m zsm im Paar sein
-    -- Dann ist aber der andere Wert im Paar sowohl minimum als auch maximum
+  have helper_result := minOfPairIsEvenHelper representation y₀
+  dsimp only at helper_result
+  rw [preimage_y₀_is_x₀, partner_x₀_eq_x₁] at helper_result
+  exact helper_result
 
 
 
-
-
-
-
-  sorry
 
 
 instance {n : ℕ} : Coe (UnsignedRepresentationOfSP (n := n)) (Equiv.Perm (Fin (2*n))) where
