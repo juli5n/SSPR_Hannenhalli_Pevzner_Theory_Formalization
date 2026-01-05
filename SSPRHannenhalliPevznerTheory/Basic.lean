@@ -1,19 +1,15 @@
 import Mathlib.Tactic.Tauto
--- import Mathlib.Logic.Equiv.Defs
--- import Mathlib.Tactic.Linarith
--- import Mathlib.GroupTheory.Perm.Basic
--- import Mathlib.Combinatorics.SimpleGraph.Basic
--- import Mathlib.Tactic.IntervalCases
--- import Mathlib.Data.Nat.SuccPred
--- import Mathlib.Algebra.Group.Even
--- import Mathlib.Order.Defs.PartialOrder
 
 
 namespace SSPRHannenhalliPevznerTheory
 
+/--
+`isConsecutive a b` states that `a` and `b` are consecutive natural numbers, i.e.
+one is the successor of the other
+-/
 @[simp]
-def isConsecutive {n : ℕ} (a b : Fin n) : Prop :=
-a.val = b.val + 1 ∨ b.val = a.val + 1
+def isConsecutive (a b : ℕ) : Prop :=
+a = b + 1 ∨ b = a + 1
 
 def isConsecutive.refl {n : ℕ} (a b : Fin n) :
 isConsecutive a b ↔ isConsecutive b a := by

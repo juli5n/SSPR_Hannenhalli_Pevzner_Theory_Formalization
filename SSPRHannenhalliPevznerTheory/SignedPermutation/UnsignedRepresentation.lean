@@ -7,64 +7,84 @@ import Mathlib.Tactic.IntervalCases
 
 namespace SSPRHannenhalliPevznerTheory
 
+/-- An unsigned permutation σ' of size $2n$ for n ∈ ℕ is called
+an unsigned representation of a signed permutation, if
+∀ i ∈ {1,...,n}, `isConsecutive` σ'(2*i) σ'(2*i+1) holds,
+i.e. the images of 2i and 2i+1 under σ' are consecutive.
+
+Every signed permutation σ of size $n$ can be associated with
+a unique `UnsignedRepresentationOfSP` σ' of size 2n and vice versa
+via the following bijective mapping: From a signed permutation σ, an
+`UnsignedRepresentationOfSP` σ' is constructed by replacing each
+positive element +i of the signed permutation by the the two numbers
+(2i-1) and 2i (in that order!) and each negative element -i by the two numbers
+(2i) and (2i-1). -/
 structure UnsignedRepresentationOfSP {n : ℕ} where
   val : Equiv.Perm (Fin (2*n))
   property : ∀ (i : Fin n), isConsecutive (val ⟨2*i, by omega⟩) (val ⟨2*i+1, by omega⟩)
 
 namespace UnsignedRepresentationOfSP
 
-
-
-end UnsignedRepresentationOfSP
-
-def UnsignedRepresentationOfSP.property' {n : ℕ}
+/-- An equivalent reformulation of `UnsignedRepresentationOfSP.property`. -/
+def property' {n : ℕ}
   (unsigned_representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)), ∀ (y : Fin (2*n)), x≠y → ((x.val/2) = (y.val/2)) →
   isConsecutive (unsigned_representation.val x) (unsigned_representation.val y) := by
   sorry
 
+end UnsignedRepresentationOfSP
 
-def partner {n : ℕ} (x : Fin (2 * n)) : Fin (2*n) :=
+
+/-- The function `toggleLSB` flips the least significant bit
+of a number in the range `Fin (2 * n)`. -/
+def toggleLSB {n : ℕ} (x : Fin (2 * n)) : Fin (2*n) :=
   ⟨if x.val % 2 = 0 then x.val + 1 else x.val - 1, by split <;> omega⟩
 
-def partner.samePairIndex {n : ℕ} (x : Fin (2 * n)) : ((x/2) : ℕ) = ((partner x)/2 : ℕ) := by
-  unfold partner
+namespace toggleLSB
+
+/-- Division by two is invariant under `toggleLSB` since
+the toggled bit is shifted away during the division. -/
+theorem div_two_eq {n : ℕ} (x : Fin (2 * n)) : ((x/2) : ℕ) = ((toggleLSB x)/2 : ℕ) := by
+  unfold toggleLSB
   split
   <;> simp only
   <;> omega
 
-def partner.notEq {n : ℕ} (x : Fin (2 * n)) : x ≠ (partner x) := by
+/-- The function `toggleLSB` is fixed-point-free. -/
+theorem not_eq {n : ℕ} (x : Fin (2 * n)) : x ≠ (toggleLSB x) := by
   apply Fin.ne_of_val_ne
-  unfold partner
+  unfold toggleLSB
   split
   <;> simp only
   <;> omega
 
-def UnsignedRepresentationOfSP.imagesOfPairConsecutive
-  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
-  isConsecutive (representation.val i) (representation.val (partner i)) :=
-  representation.property' i (partner i) (partner.notEq i) (partner.samePairIndex i)
-
-theorem partner.involutive {n : ℕ} : Function.Involutive (partner (n := n)) := by
+/-- The function `toggleLSB` is involutive, i.e.
+it is it's own inverse. -/
+theorem involutive {n : ℕ} : Function.Involutive (toggleLSB (n := n)) := by
   intro x
   apply Fin.eq_of_val_eq
-  unfold partner
+  unfold toggleLSB
   simp only
   split_ifs with h1 h2
   <;> omega
 
-#check congrArg
+theorem eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
+  toggleLSB x = y ↔ x = toggleLSB y :=
+  Function.Involutive.eq_iff toggleLSB.involutive
 
-theorem partner.eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
-  partner x = y ↔ x = partner y :=
-  Function.Involutive.eq_iff partner.involutive
+end toggleLSB
+
+theorem UnsignedRepresentationOfSP.images_of_toggleLSB_consecutive
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
+  isConsecutive (representation.val i) (representation.val (toggleLSB i)) :=
+  representation.property' i (toggleLSB i) (toggleLSB.not_eq i) (toggleLSB.div_two_eq i)
 
 
-theorem minOfPairIsEvenHelper
+private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_is_even
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
 ∀ (y₀ : Fin (2*n)),
   let x₀ := representation.val.symm y₀
-  let x₁ := partner x₀
+  let x₁ := toggleLSB x₀
   let y₁ := representation.val x₁
   Even (min y₀.val y₁.val) := by
   intro y₀
@@ -84,11 +104,11 @@ theorem minOfPairIsEvenHelper
       (Equiv.symm_apply_eq representation.val).mp rfl
 
 
-    have x₀_neq_x₁ : x₀ ≠ x₁ := partner.notEq x₀
+    have x₀_neq_x₁ : x₀ ≠ x₁ := toggleLSB.not_eq x₀
 
 
     have y₀_y₁_consecutive : isConsecutive y₀ y₁ := by
-      have := representation.imagesOfPairConsecutive x₀
+      have := representation.images_of_toggleLSB_consecutive x₀
       rw [← y₀_eq_image_x₀] at this
       exact this
 
@@ -112,9 +132,9 @@ theorem minOfPairIsEvenHelper
         Equiv.symm_apply_apply representation.val x₁
       simp only [preimage_y₁_eq_x₁] at induction_hypothesis
 
-      have x₀_eq_partner_x₁ : x₀ = partner x₁ := by
-        have : x₁ = partner x₀ := rfl
-        exact partner.eq_iff.mp this
+      have x₀_eq_partner_x₁ : x₀ = toggleLSB x₁ := by
+        have : x₁ = toggleLSB x₀ := rfl
+        exact toggleLSB.eq_iff.mp this
 
       rw [← y₁_eq_i] at induction_hypothesis
       rw [← x₀_eq_partner_x₁] at induction_hypothesis
@@ -147,7 +167,7 @@ theorem minOfPairIsEvenHelper
 
       let y₀' := i_as_fin_2n
       let x₀' := (Equiv.symm representation.val) i_as_fin_2n
-      let x₁' : Fin (2*n) := partner x₀'
+      let x₁' : Fin (2*n) := toggleLSB x₀'
       let y₁' := representation.val x₁'
 
       dsimp only at induction_hypothesis
@@ -158,7 +178,7 @@ theorem minOfPairIsEvenHelper
         Equiv.apply_symm_apply representation.val i_as_fin_2n
 
       have y₀'_y₁'_consecutive : isConsecutive (representation.val x₀') y₁' :=
-        (representation.imagesOfPairConsecutive x₀')
+        (representation.images_of_toggleLSB_consecutive x₀')
       rw [image_x₀'_is_y₀'] at y₀'_y₁'_consecutive
 
       unfold isConsecutive at *
@@ -213,13 +233,13 @@ theorem minOfPairIsEvenHelper
         calc
         i = y₀' := by rfl
         _ = representation.val x₀' := by exact Fin.val_eq_of_eq image_x₀'_is_y₀'.symm
-        _ = representation.val (partner x₁') := by
-          rw [← partner.eq_iff.mpr (show x₁' = partner x₀' by rfl)]
-        _ = representation.val (partner (representation.val.symm y₁')) := by
+        _ = representation.val (toggleLSB x₁') := by
+          rw [← toggleLSB.eq_iff.mpr (show x₁' = toggleLSB x₀' by rfl)]
+        _ = representation.val (toggleLSB (representation.val.symm y₁')) := by
           have : y₁' = representation.val x₁' := rfl
           rw [(Equiv.symm_apply_eq representation.val).mpr this]
-        _ = representation.val (partner (representation.val.symm y₀)) := by rw [y₁'_eq_y₀]
-        _ = representation.val (partner (x₀)) := by rfl
+        _ = representation.val (toggleLSB (representation.val.symm y₀)) := by rw [y₁'_eq_y₀]
+        _ = representation.val (toggleLSB (x₀)) := by rfl
         _ = representation.val (x₁) := rfl
         _ = y₁ := rfl
         _ = i + 2 := by exact y₁_eq_y₀p1
@@ -229,6 +249,92 @@ theorem minOfPairIsEvenHelper
 
 
 
+private theorem UnsignedRepresentationOfSP.min_of_toggleLSB_pair_image_is_even
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
+  ∀ (x : Fin (2*n)),
+  Even (min (representation.val x).val (representation.val (toggleLSB x)).val) := by
+  intro x
+  let image_x := representation.val x
+  have := representation.min_of_preimage_toggleLSB_pair_image_is_even image_x
+  dsimp only at this
+  have preimage_image_x_eq_x: Equiv.symm representation.val image_x = x :=
+    Equiv.symm_apply_apply representation.val x
+
+  rw [preimage_image_x_eq_x] at this
+  exact this
+
+
+theorem UnsignedRepresentationOfSP.unnamed
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
+  ∀ (x : Fin (2*n)),
+  (h : Even (representation.val x).val) →
+  (representation.val (toggleLSB x)) = ⟨(representation.val x) + 1, by rw [Nat.even_iff] at h; omega⟩ := by
+  intro x image_x_even
+  apply Fin.eq_of_val_eq
+  cases (representation.images_of_toggleLSB_consecutive x)
+  <;> rename_i images_consecutive_case
+
+  · have := representation.min_of_toggleLSB_pair_image_is_even x
+    rw [Nat.even_iff] at this
+    rw [images_consecutive_case] at this
+    rw [min_eq_right _] at this
+    · rw [← Nat.even_iff] at this
+      have smth := Even.one_add this
+      rw [add_comm] at smth
+      rw [← images_consecutive_case] at smth
+      rw [← Nat.not_even_iff_odd] at smth
+      contradiction
+    · exact Nat.le_add_right (↑(representation.val (toggleLSB x))) 1
+
+  · rw [images_consecutive_case]
+
+
+/-- A permutation that represents a signed permutation commutes with
+`toggleLSB` -/
+theorem UnsignedRepresentationOfSP.map_toggleLSB
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
+  ∀ (x : Fin (2*n)), representation.val (toggleLSB x) = toggleLSB (representation.val x) := by
+    intro x
+    apply Fin.eq_of_val_eq
+
+    let image_x := representation.val x
+
+    cases (Nat.mod_two_eq_zero_or_one (representation.val x))
+    <;> rename_i mod2_case
+    <;> nth_rw 2 [toggleLSB]
+    <;> simp only [mod2_case, ↓reduceIte, one_ne_zero]
+    <;> cases (representation.images_of_toggleLSB_consecutive x)
+    <;> rename_i images_consecutive_case
+    <;> rw [images_consecutive_case]
+    <;> have min_even :=  representation.min_of_toggleLSB_pair_image_is_even x
+    <;> rw [images_consecutive_case] at min_even
+
+    · have image_x_even := (Nat.even_iff.mpr mod2_case)
+      rw [min_eq_right _] at min_even
+      · have := Even.add_one min_even
+        rw [← images_consecutive_case] at this
+        rw [← Nat.not_even_iff_odd] at this
+        contradiction
+      · exact Nat.le_add_right (↑(representation.val (toggleLSB x))) 1
+    · omega
+    · have image_x_odd := (Nat.odd_iff.mpr mod2_case)
+      rw [min_eq_left _] at min_even
+      · have := Even.add_one min_even
+        rw [← Nat.not_even_iff_odd] at image_x_odd
+        contradiction
+      · exact Nat.le_add_right (↑(representation.val x)) 1
+
+
+private theorem UnsignedRepresentationOfSP.image_of_toggleLSB_pair_is_toggleLSB_pair
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
+  ∀ (x : Fin (2*n)), ∃ (y : Fin (2*n)),
+  representation.val x = y ∧ representation.val (toggleLSB x) = toggleLSB y := by
+  intro x
+  let y := representation.val x
+  use y
+  constructor
+  · rfl
+  · sorry
 
 
 
@@ -242,15 +348,15 @@ Even (min y₀.val y₁.val) := by
   let x₀ : Fin (2*n) := ⟨2*i, by omega⟩
   let x₁ : Fin (2*n) := ⟨2*i+1, by omega⟩
 
-  have partner_x₀_eq_x₁ : partner x₀ = x₁ := by
+  have partner_x₀_eq_x₁ : toggleLSB x₀ = x₁ := by
     apply Fin.eq_of_val_eq
-    unfold partner
+    unfold toggleLSB
     simp [x₀, x₁]
 
   have preimage_y₀_is_x₀: representation.val.symm y₀ = x₀ := by
     rw [Equiv.symm_apply_eq]
 
-  have helper_result := minOfPairIsEvenHelper representation y₀
+  have helper_result := min_of_preimage_toggleLSB_pair_image_is_even representation y₀
   dsimp only at helper_result
   rw [preimage_y₀_is_x₀, partner_x₀_eq_x₁] at helper_result
   exact helper_result

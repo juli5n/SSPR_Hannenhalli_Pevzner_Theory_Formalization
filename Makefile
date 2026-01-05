@@ -11,7 +11,7 @@ MAIN_SOURCE_DIRECTORY_SOURCES=$(call rwildcard,$(MAIN_SOURCE_DIRECTORY),*.lean)
 
 SOURCE=$(ROOT_SOURCE_FILE) $(MAIN_SOURCE_DIRECTORY_SOURCES)
 
-$(info SOURCE=$(SOURCE))
+# $(info SOURCE=$(SOURCE))
 
 
 # Gather output paths
