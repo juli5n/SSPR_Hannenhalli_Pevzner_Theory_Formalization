@@ -74,6 +74,10 @@ theorem eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
 
 end toggleLSB
 
+
+/-- The images of x ∈ `Fin (2 * n)` and `toggleLSB`(x)
+under an unsigned representation of a signed permutation
+(`UnsignedRepresentationOfSP`) are consecutive. -/
 theorem UnsignedRepresentationOfSP.images_of_toggleLSB_consecutive
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
   isConsecutive (representation.val i) (representation.val (toggleLSB i)) :=
@@ -249,6 +253,9 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
 
 
 
+/-- The minimum of the images of x ∈ `Fin (2 * n)` and `toggleLSB`(x)
+under an unsigned representation of a signed permutation
+(`UnsignedRepresentationOfSP`) is even. -/
 private theorem UnsignedRepresentationOfSP.min_of_toggleLSB_pair_image_is_even
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)),
@@ -264,25 +271,25 @@ private theorem UnsignedRepresentationOfSP.min_of_toggleLSB_pair_image_is_even
   exact this
 
 
-theorem UnsignedRepresentationOfSP.unnamed
+/-- If the image of x is even under an `UnsignedRepresentationOfSP` σ',
+then σ'(`toggleLSB`(x)) = σ'(x)+1. -/
+theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_even
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)),
   (h : Even (representation.val x).val) →
-  (representation.val (toggleLSB x)) = ⟨(representation.val x) + 1, by rw [Nat.even_iff] at h; omega⟩ := by
+  (representation.val (toggleLSB x)) =
+  ⟨(representation.val x) + 1, by rw [Nat.even_iff] at h; omega⟩ := by
   intro x image_x_even
   apply Fin.eq_of_val_eq
   cases (representation.images_of_toggleLSB_consecutive x)
   <;> rename_i images_consecutive_case
 
   · have := representation.min_of_toggleLSB_pair_image_is_even x
-    rw [Nat.even_iff] at this
     rw [images_consecutive_case] at this
     rw [min_eq_right _] at this
-    · rw [← Nat.even_iff] at this
-      have smth := Even.one_add this
-      rw [add_comm] at smth
-      rw [← images_consecutive_case] at smth
-      rw [← Nat.not_even_iff_odd] at smth
+    · have image_toggleLSB_plus_one_odd := Even.add_one this
+      rw [← images_consecutive_case] at image_toggleLSB_plus_one_odd
+      rw [← Nat.not_even_iff_odd] at image_toggleLSB_plus_one_odd
       contradiction
     · exact Nat.le_add_right (↑(representation.val (toggleLSB x))) 1
 
@@ -325,17 +332,18 @@ theorem UnsignedRepresentationOfSP.map_toggleLSB
       · exact Nat.le_add_right (↑(representation.val x)) 1
 
 
-private theorem UnsignedRepresentationOfSP.image_of_toggleLSB_pair_is_toggleLSB_pair
+theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
-  ∀ (x : Fin (2*n)), ∃ (y : Fin (2*n)),
-  representation.val x = y ∧ representation.val (toggleLSB x) = toggleLSB y := by
-  intro x
-  let y := representation.val x
-  use y
-  constructor
-  · rfl
-  · sorry
-
+  ∀ (x : Fin (2*n)),
+  (h : Odd (representation.val x).val) →
+  (representation.val (toggleLSB x)) =
+  ⟨(representation.val x) - 1, by omega⟩ := by
+  intro x image_x_odd
+  rw [Nat.odd_iff] at image_x_odd
+  have := representation.map_toggleLSB x
+  nth_rw 2 [toggleLSB] at this
+  simp only [image_x_odd, one_ne_zero, ↓reduceIte] at this
+  exact this
 
 
 theorem UnsignedRepresentationOfSP.minOfPairIsEven
