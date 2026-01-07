@@ -23,13 +23,21 @@ structure UnsignedRepresentationOfSP {n : ℕ} where
   val : Equiv.Perm (Fin (2*n))
   property : ∀ (i : Fin n), isConsecutive (val ⟨2*i, by omega⟩) (val ⟨2*i+1, by omega⟩)
 
+
+instance {n : ℕ} : CoeFun (UnsignedRepresentationOfSP (n := n))
+(fun _ ↦ (Fin (2 * n)) → (Fin (2 * n))) where
+  coe unsigned_representation := unsigned_representation.val
+
+instance {n : ℕ} : Coe (UnsignedRepresentationOfSP (n := n)) (Equiv.Perm (Fin (2 * n))) where
+  coe u := u.val
+
 namespace UnsignedRepresentationOfSP
 
 /-- An equivalent reformulation of `UnsignedRepresentationOfSP.property`. -/
 def property' {n : ℕ}
   (unsigned_representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)), ∀ (y : Fin (2*n)), x≠y → ((x.val/2) = (y.val/2)) →
-  isConsecutive (unsigned_representation.val x) (unsigned_representation.val y) := by
+  isConsecutive (unsigned_representation x) (unsigned_representation y) := by
   sorry
 
 end UnsignedRepresentationOfSP
@@ -80,7 +88,7 @@ under an unsigned representation of a signed permutation
 (`UnsignedRepresentationOfSP`) are consecutive. -/
 theorem UnsignedRepresentationOfSP.images_of_toggleLSB_consecutive
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
-  isConsecutive (representation.val i) (representation.val (toggleLSB i)) :=
+  isConsecutive (representation i) (representation (toggleLSB i)) :=
   representation.property' i (toggleLSB i) (toggleLSB.not_eq i) (toggleLSB.div_two_eq i)
 
 
@@ -89,7 +97,7 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
 ∀ (y₀ : Fin (2*n)),
   let x₀ := representation.val.symm y₀
   let x₁ := toggleLSB x₀
-  let y₁ := representation.val x₁
+  let y₁ := representation x₁
   Even (min y₀.val y₁.val) := by
   intro y₀
   induction h : y₀.val generalizing y₀ with
@@ -104,7 +112,7 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
   | succ i induction_hypothesis =>
     intro x₀ x₁ y₁
 
-    have y₀_eq_image_x₀ : y₀ = representation.val x₀ :=
+    have y₀_eq_image_x₀ : y₀ = representation x₀ :=
       (Equiv.symm_apply_eq representation.val).mp rfl
 
 
@@ -172,16 +180,16 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
       let y₀' := i_as_fin_2n
       let x₀' := (Equiv.symm representation.val) i_as_fin_2n
       let x₁' : Fin (2*n) := toggleLSB x₀'
-      let y₁' := representation.val x₁'
+      let y₁' := representation x₁'
 
       dsimp only at induction_hypothesis
 
       change Even (Min.min y₀'.val y₁'.val) at induction_hypothesis
 
-      have image_x₀'_is_y₀' : representation.val x₀' = y₀' :=
+      have image_x₀'_is_y₀' : representation x₀' = y₀' :=
         Equiv.apply_symm_apply representation.val i_as_fin_2n
 
-      have y₀'_y₁'_consecutive : isConsecutive (representation.val x₀') y₁' :=
+      have y₀'_y₁'_consecutive : isConsecutive (representation x₀') y₁' :=
         (representation.images_of_toggleLSB_consecutive x₀')
       rw [image_x₀'_is_y₀'] at y₀'_y₁'_consecutive
 
@@ -236,15 +244,15 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
       have : i = i+2 :=
         calc
         i = y₀' := by rfl
-        _ = representation.val x₀' := by exact Fin.val_eq_of_eq image_x₀'_is_y₀'.symm
-        _ = representation.val (toggleLSB x₁') := by
+        _ = representation x₀' := by exact Fin.val_eq_of_eq image_x₀'_is_y₀'.symm
+        _ = representation (toggleLSB x₁') := by
           rw [← toggleLSB.eq_iff.mpr (show x₁' = toggleLSB x₀' by rfl)]
-        _ = representation.val (toggleLSB (representation.val.symm y₁')) := by
+        _ = representation (toggleLSB (representation.val.symm y₁')) := by
           have : y₁' = representation.val x₁' := rfl
           rw [(Equiv.symm_apply_eq representation.val).mpr this]
-        _ = representation.val (toggleLSB (representation.val.symm y₀)) := by rw [y₁'_eq_y₀]
-        _ = representation.val (toggleLSB (x₀)) := by rfl
-        _ = representation.val (x₁) := rfl
+        _ = representation (toggleLSB (representation.val.symm y₀)) := by rw [y₁'_eq_y₀]
+        _ = representation (toggleLSB (x₀)) := by rfl
+        _ = representation (x₁) := rfl
         _ = y₁ := rfl
         _ = i + 2 := by exact y₁_eq_y₀p1
 
@@ -259,54 +267,30 @@ under an unsigned representation of a signed permutation
 private theorem UnsignedRepresentationOfSP.min_of_toggleLSB_pair_image_is_even
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)),
-  Even (min (representation.val x).val (representation.val (toggleLSB x)).val) := by
+  Even (min (representation x).val (representation (toggleLSB x)).val) := by
   intro x
-  let image_x := representation.val x
+  let image_x := representation x
   have := representation.min_of_preimage_toggleLSB_pair_image_is_even image_x
   dsimp only at this
-  have preimage_image_x_eq_x: Equiv.symm representation.val image_x = x :=
+  have preimage_image_x_eq_x: representation.val.symm image_x = x :=
     Equiv.symm_apply_apply representation.val x
 
   rw [preimage_image_x_eq_x] at this
   exact this
 
 
-/-- If the image of x is even under an `UnsignedRepresentationOfSP` σ',
-then σ'(`toggleLSB`(x)) = σ'(x)+1. -/
-theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_even
-  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
-  ∀ (x : Fin (2*n)),
-  (h : Even (representation.val x).val) →
-  (representation.val (toggleLSB x)) =
-  ⟨(representation.val x) + 1, by rw [Nat.even_iff] at h; omega⟩ := by
-  intro x image_x_even
-  apply Fin.eq_of_val_eq
-  cases (representation.images_of_toggleLSB_consecutive x)
-  <;> rename_i images_consecutive_case
-
-  · have := representation.min_of_toggleLSB_pair_image_is_even x
-    rw [images_consecutive_case] at this
-    rw [min_eq_right _] at this
-    · have image_toggleLSB_plus_one_odd := Even.add_one this
-      rw [← images_consecutive_case] at image_toggleLSB_plus_one_odd
-      rw [← Nat.not_even_iff_odd] at image_toggleLSB_plus_one_odd
-      contradiction
-    · exact Nat.le_add_right (↑(representation.val (toggleLSB x))) 1
-
-  · rw [images_consecutive_case]
-
 
 /-- A permutation that represents a signed permutation commutes with
 `toggleLSB` -/
 theorem UnsignedRepresentationOfSP.map_toggleLSB
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
-  ∀ (x : Fin (2*n)), representation.val (toggleLSB x) = toggleLSB (representation.val x) := by
+  ∀ (x : Fin (2*n)), representation (toggleLSB x) = toggleLSB (representation x) := by
     intro x
     apply Fin.eq_of_val_eq
 
-    let image_x := representation.val x
+    let image_x := representation x
 
-    cases (Nat.mod_two_eq_zero_or_one (representation.val x))
+    cases (Nat.mod_two_eq_zero_or_one (representation x))
     <;> rename_i mod2_case
     <;> nth_rw 2 [toggleLSB]
     <;> simp only [mod2_case, ↓reduceIte, one_ne_zero]
@@ -322,22 +306,39 @@ theorem UnsignedRepresentationOfSP.map_toggleLSB
         rw [← images_consecutive_case] at this
         rw [← Nat.not_even_iff_odd] at this
         contradiction
-      · exact Nat.le_add_right (↑(representation.val (toggleLSB x))) 1
+      · exact Nat.le_add_right (↑(representation (toggleLSB x))) 1
     · omega
     · have image_x_odd := (Nat.odd_iff.mpr mod2_case)
       rw [min_eq_left _] at min_even
       · have := Even.add_one min_even
         rw [← Nat.not_even_iff_odd] at image_x_odd
         contradiction
-      · exact Nat.le_add_right (↑(representation.val x)) 1
+      · exact Nat.le_add_right (↑(representation x)) 1
+
+/-- If the image of x is even under an `UnsignedRepresentationOfSP` σ',
+then σ'(`toggleLSB`(x)) = σ'(x)+1. -/
+theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_even
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
+  ∀ (x : Fin (2*n)),
+  (h : Even (representation x).val) →
+  (representation (toggleLSB x)) =
+  ⟨(representation x) + 1, by rw [Nat.even_iff] at h; omega⟩ := by
+  intro x image_x_even
+  rw [Nat.even_iff] at image_x_even
+  have := representation.map_toggleLSB x
+  nth_rw 2 [toggleLSB] at this
+  simp only [image_x_even, ↓reduceIte] at this
+  exact this
 
 
+/-- If the image of x is odd under an `UnsignedRepresentationOfSP` σ',
+then σ'(`toggleLSB`(x)) = σ'(x)-1. -/
 theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
   ∀ (x : Fin (2*n)),
-  (h : Odd (representation.val x).val) →
-  (representation.val (toggleLSB x)) =
-  ⟨(representation.val x) - 1, by omega⟩ := by
+  (h : Odd (representation x).val) →
+  (representation (toggleLSB x)) =
+  ⟨(representation x) - 1, by omega⟩ := by
   intro x image_x_odd
   rw [Nat.odd_iff] at image_x_odd
   have := representation.map_toggleLSB x
@@ -346,7 +347,7 @@ theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   exact this
 
 
-theorem UnsignedRepresentationOfSP.minOfPairIsEven
+/-theorem UnsignedRepresentationOfSP.minOfPairIsEven
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
 ∀ (i : Fin n),
 let y₀ : Fin (2*n) := representation.val ⟨2*i, by omega⟩
@@ -367,14 +368,11 @@ Even (min y₀.val y₁.val) := by
   have helper_result := min_of_preimage_toggleLSB_pair_image_is_even representation y₀
   dsimp only at helper_result
   rw [preimage_y₀_is_x₀, partner_x₀_eq_x₁] at helper_result
-  exact helper_result
+  exact helper_result-/
 
 
 
 
-
-instance {n : ℕ} : Coe (UnsignedRepresentationOfSP (n := n)) (Equiv.Perm (Fin (2*n))) where
-  coe x := x.val
 
 def SignedPermutation.toUnsignedDirect {n : ℕ}
 (signed_permutation : SignedPermutation (n := n)) :
@@ -581,7 +579,7 @@ SignedPermutation (n := n) :=
     values := {
       toFun :=
         fun i ↦
-        ⟨(unsigned_permutation.val ⟨2*i, by omega⟩) / 2, by omega⟩
+        ⟨(unsigned_permutation ⟨2*i, by omega⟩) / 2, by omega⟩
       invFun :=
         fun i ↦
         ⟨unsigned_permutation.val.invFun ⟨2*i, by omega⟩ / 2, by omega⟩
@@ -595,10 +593,10 @@ SignedPermutation (n := n) :=
 
         let first_uindex : Fin (2*n) := ⟨2*i, by omega⟩
         let second_uindex : Fin (2*n) := ⟨2*i, by omega⟩
-        let first_uvalue := unsigned_permutation.val first_uindex
-        let second_uvalue := unsigned_permutation.val second_uindex
+        let first_uvalue := unsigned_permutation first_uindex
+        let second_uvalue := unsigned_permutation second_uindex
 
-        let considered_value := (((unsigned_permutation.val first_uindex) : ℕ) / 2) * 2
+        let considered_value := (((unsigned_permutation first_uindex) : ℕ) / 2) * 2
 
         have :
           considered_value = first_uvalue ∨ considered_value = second_uvalue := by
