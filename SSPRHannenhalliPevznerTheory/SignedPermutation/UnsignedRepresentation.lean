@@ -80,6 +80,11 @@ theorem eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
   toggleLSB x = y ↔ x = toggleLSB y :=
   Function.Involutive.eq_iff toggleLSB.involutive
 
+theorem odd_iff {n : ℕ} {x : Fin (2 * n)} :
+  Odd x.val ↔ Even (toggleLSB x).val := by
+  sorry
+
+
 end toggleLSB
 
 
@@ -90,6 +95,23 @@ theorem UnsignedRepresentationOfSP.images_of_toggleLSB_consecutive
   {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
   isConsecutive (representation i) (representation (toggleLSB i)) :=
   representation.property' i (toggleLSB i) (toggleLSB.not_eq i) (toggleLSB.div_two_eq i)
+
+theorem UnsignedRepresentationOfSP.image_even_iff_toggleLSB_odd
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2 * n)) :
+  Even (representation x).val ↔ Odd (representation (toggleLSB x)).val := by
+  rw [Nat.even_iff, Nat.odd_iff]
+  have := representation.images_of_toggleLSB_consecutive x
+  unfold isConsecutive at this
+  cases this <;> rename_i consecutive_case
+  <;> omega
+
+theorem UnsignedRepresentationOfSP.image_odd_iff_toggleLSB_even
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (i : Fin (2 * n)) :
+  Odd (representation i).val ↔ Even (representation (toggleLSB i)).val := by
+  rw [← Nat.not_even_iff_odd,
+    representation.image_even_iff_toggleLSB_odd,
+    Nat.not_odd_iff_even]
+
 
 
 private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_is_even
@@ -111,28 +133,25 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
       exact Nat.even_iff.mpr this
   | succ i induction_hypothesis =>
     intro x₀ x₁ y₁
+    rw [← h]
 
     have y₀_eq_image_x₀ : y₀ = representation x₀ :=
       (Equiv.symm_apply_eq representation.val).mp rfl
 
-
     have x₀_neq_x₁ : x₀ ≠ x₁ := toggleLSB.not_eq x₀
-
 
     have y₀_y₁_consecutive : isConsecutive y₀ y₁ := by
       have := representation.images_of_toggleLSB_consecutive x₀
       rw [← y₀_eq_image_x₀] at this
       exact this
 
-
-    let min := min (i + 1) y₁.val
+    let min_y₀_y₁ := min (i + 1) y₁.val
     unfold isConsecutive at y₀_y₁_consecutive
-    obtain min_is_y₁|min_is_ip1 := (min_choice (i+1) y₁).symm
+    obtain min_is_y₁|min_is_y₀ := (min_choice y₀.val y₁.val).symm
 
     -- If y₁ is the minimum, then y₁ must be i and we can apply
     -- the induction hypothesis
-    ·
-      have y₁_eq_i : y₁ = i := by omega
+    · have y₁_eq_i : y₁ = i := by omega
 
       specialize induction_hypothesis y₁ y₁_eq_i
 
@@ -144,34 +163,34 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
         Equiv.symm_apply_apply representation.val x₁
       simp only [preimage_y₁_eq_x₁] at induction_hypothesis
 
-      have x₀_eq_partner_x₁ : x₀ = toggleLSB x₁ := by
+      have x₀_eq_toggleLSB_x₁ : x₀ = toggleLSB x₁ := by
         have : x₁ = toggleLSB x₀ := rfl
         exact toggleLSB.eq_iff.mp this
 
       rw [← y₁_eq_i] at induction_hypothesis
-      rw [← x₀_eq_partner_x₁] at induction_hypothesis
+      rw [← x₀_eq_toggleLSB_x₁] at induction_hypothesis
 
       rw [← y₀_eq_image_x₀] at induction_hypothesis
 
-
-      rw [← h, min_comm]
+      rw [min_comm]
       exact induction_hypothesis
 
 
     -- Case: y₀ (=i+1) is minimum and y₁=i+2
     · have y₁_eq_y₀p1 : y₁ = i + 2 := by omega
+
       -- Assume the minimum y₀ is odd
       by_contra min_is_odd
       rw [Nat.not_even_iff_odd] at min_is_odd
 
       -- Since y₀ is odd, y₀-1=i must be even
       have i_is_even : Even i := by
-        rw [min_is_ip1] at min_is_odd
-        rw [← Nat.not_even_iff_odd] at min_is_odd
-        rw [Nat.even_add_one] at min_is_odd
-        exact of_not_not min_is_odd
+        have y₀_odd := min_is_y₀ ▸ min_is_odd
+        rw [← Nat.not_even_iff_odd] at y₀_odd
+        rw [h] at y₀_odd
+        rw [Nat.even_add_one] at y₀_odd
+        exact of_not_not y₀_odd
 
-      --
       have i_le_2n : i < 2*n := by omega
       let i_as_fin_2n : Fin (2*n) := ⟨i, i_le_2n⟩
 
@@ -194,7 +213,7 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
       rw [image_x₀'_is_y₀'] at y₀'_y₁'_consecutive
 
       unfold isConsecutive at *
-      rw [← h] at min_is_ip1
+      rw [← h] at min_is_y₀
 
 
       -- Since the minimum of y₀' y₁' is even after the induction hypothesis
