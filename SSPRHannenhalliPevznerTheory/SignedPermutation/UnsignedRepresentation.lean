@@ -213,7 +213,6 @@ private theorem UnsignedRepresentationOfSP.min_of_preimage_toggleLSB_pair_image_
       rw [image_x₀'_is_y₀'] at y₀'_y₁'_consecutive
 
       unfold isConsecutive at *
-      rw [← h] at min_is_y₀
 
 
       -- Since the minimum of y₀' y₁' is even after the induction hypothesis
