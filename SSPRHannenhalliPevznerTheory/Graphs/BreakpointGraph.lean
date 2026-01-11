@@ -21,7 +21,14 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := 
       symm := by dsimp only [isConsecutive]; tauto
       loopless := by dsimp only [Irreflexive, isConsecutive]; omega
     }
-
+    decidableBlack := by
+      intro x y
+      dsimp
+      exact instDecidableAnd
+    decidableGray := by
+      intro x y
+      dsimp
+      exact instDecidableAnd
   }
 
 
