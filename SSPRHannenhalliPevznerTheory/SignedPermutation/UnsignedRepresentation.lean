@@ -364,6 +364,12 @@ theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   simp only [image_x_odd, one_ne_zero, ↓reduceIte] at this
   exact this
 
+theorem UnsignedRepresentationOfSP.div_two_eq_toggleLSB_div_two
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2*n)):
+  (representation x).val / 2 = (representation (toggleLSB x)).val / 2 := by
+
+  sorry
+
 
 /-theorem UnsignedRepresentationOfSP.minOfPairIsEven
 {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) :
@@ -590,6 +596,8 @@ UnsignedRepresentationOfSP (n := n) :=
 
 example : (⟨0, by norm_num⟩ : Fin 2).val = 0 := by exact rfl
 
+#check Function.LeftInverse
+
 def SignedPermutation.fromUnsigned {n : ℕ}
 (unsigned_permutation : UnsignedRepresentationOfSP (n := n)) :
 SignedPermutation (n := n) :=
@@ -602,6 +610,7 @@ SignedPermutation (n := n) :=
         fun i ↦
         ⟨unsigned_permutation.val.invFun ⟨2*i, by omega⟩ / 2, by omega⟩
       left_inv := by
+        -- We have to prove invFun (toFun x) = x
         intro i
         simp only
         apply Fin.eq_of_val_eq
@@ -609,21 +618,38 @@ SignedPermutation (n := n) :=
         simp only [Equiv.invFun_as_coe, Nat.add_one_sub_one]
         rw [Nat.le_and_le_add_one_iff]
 
-        let first_uindex : Fin (2*n) := ⟨2*i, by omega⟩
-        let second_uindex : Fin (2*n) := ⟨2*i, by omega⟩
-        let first_uvalue := unsigned_permutation first_uindex
-        let second_uvalue := unsigned_permutation second_uindex
 
-        let considered_value := (((unsigned_permutation first_uindex) : ℕ) / 2) * 2
+        set! first_uindex : Fin (2*n) := ⟨2*i, by omega⟩ with h_first_uindex
+        set! second_uindex : Fin (2*n) := ⟨2*i+1, by omega⟩ with ← h2
+        set! first_uvalue := unsigned_permutation first_uindex with h_first_uvalue
+        set! second_uvalue := unsigned_permutation second_uindex with ← h4
+
+        set considered_value := 2 * ((first_uvalue.val) / 2) with h_considered_value
+        simp_rw [ ← h_first_uindex, ← h_first_uvalue, ← h_considered_value]
 
         have :
-          considered_value = first_uvalue ∨ considered_value = second_uvalue := by
-          sorry
+          considered_value = first_uvalue ∨ considered_value = second_uvalue
+          := by
 
+          obtain first_uvalue_even|first_uvalue_odd :=  (Nat.even_or_odd first_uvalue)
+          · left
+            rw [Nat.even_iff] at first_uvalue_even
+            rw [h_considered_value]
+            omega
+          · right
+            -- have second_uvalue :=
+            -- rw [h_considered_value]
+
+            -- rw [Nat.odd_iff] at first_uvalue_odd
+
+            sorry
 
         sorry
 
-      right_inv := sorry
+      right_inv :=
+        -- We have to prove toFun (invFun x) = x
+
+        sorry
     },
     signs :=
       fun i ↦

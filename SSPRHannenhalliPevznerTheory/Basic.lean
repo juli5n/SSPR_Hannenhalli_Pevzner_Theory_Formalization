@@ -16,4 +16,5 @@ isConsecutive a b ↔ isConsecutive b a := by
   unfold isConsecutive
   tauto
 
+
 end SSPRHannenhalliPevznerTheory

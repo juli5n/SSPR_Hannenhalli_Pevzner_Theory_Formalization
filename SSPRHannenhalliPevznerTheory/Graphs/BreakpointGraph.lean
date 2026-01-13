@@ -1,13 +1,14 @@
 import SSPRHannenhalliPevznerTheory.Basic
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
 
+
 namespace SSPRHannenhalliPevznerTheory
 
 namespace BreakpointGraph
 
 
 
-def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n) :=
+def fromPermutationDirect {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n) :=
   {
     blackEdgesGraph := {
       Adj (x : Fin n) (y : Fin n) :=
@@ -23,6 +24,9 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := 
     }
 
   }
+
+def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := n+2) :=
+  fromPermutationDirect (addFrameToPermutation σ)
 
 
 

@@ -6,7 +6,7 @@ namespace SSPRHannenhalliPevznerTheory.CycleGraph
 def isPaired {n : ℕ} (x : Fin n) (y : Fin n) :=
   (¬ x = y) ∧ (x.val / 2 = y.val / 2)
 
-def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
+def fromPermutationDirect {n : ℕ} (σ : Equiv.Perm (Fin n))
   : TwoColoredGraph (n := n) :=
   {
     blackEdgesGraph := {
@@ -20,5 +20,9 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
       loopless := by dsimp only [isPaired]; tauto
     }
   }
+
+def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
+  : TwoColoredGraph (n := n+2) :=
+  fromPermutationDirect (addFrameToPermutation σ)
 
 end SSPRHannenhalliPevznerTheory.CycleGraph
