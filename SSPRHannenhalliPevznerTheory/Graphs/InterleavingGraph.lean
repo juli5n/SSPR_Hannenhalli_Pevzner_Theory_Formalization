@@ -39,7 +39,9 @@ abbrev AlternatingCycleVertex {n : ℕ} (G : TwoColoredGraph (n := n)) :=
   Σ (u : Fin n), {p : G.fullGraph.Walk u u // p.IsCycle ∧ IsAlternatingWalk p}
 
 /-- Extract the set of gray edges from an alternating cycle. -/
-def getGrayEdges {n : ℕ} {G : TwoColoredGraph (n := n)} (c : AlternatingCycleVertex G) :
+def getGrayEdges {n : ℕ} {G : TwoColoredGraph (n := n)}
+  [DecidableRel G.grayEdgesGraph.Adj]
+  (c : AlternatingCycleVertex G) :
     Finset (Sym2 (Fin n)) :=
   c.2.1.edges.toFinset.filter (fun e => e ∈ G.grayEdgesGraph.edgeSet)
 
@@ -70,7 +72,8 @@ The interleaving graph $H_G$ where nodes are alternating cycles.
 Two cycles are adjacent if they are distinct and have at least one pair of
 interleaving gray edges.
 -/
-def InterleavingGraph {n : ℕ} (G : TwoColoredGraph (n := n)) :
+def InterleavingGraph {n : ℕ} (G : TwoColoredGraph (n := n))
+  [DecidableRel G.grayEdgesGraph.Adj] :
     SimpleGraph (AlternatingCycleVertex G) where
   Adj cycle₁ cycle₂ :=
     let grayEdges₁ := getGrayEdges cycle₁

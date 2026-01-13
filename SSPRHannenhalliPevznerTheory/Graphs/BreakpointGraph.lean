@@ -21,15 +21,23 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n)) : TwoColoredGraph (n := 
       symm := by dsimp only [isConsecutive]; tauto
       loopless := by dsimp only [Irreflexive, isConsecutive]; omega
     }
-    decidableBlack := by
-      intro x y
-      dsimp
-      exact instDecidableAnd
-    decidableGray := by
-      intro x y
-      dsimp
-      exact instDecidableAnd
   }
+
+instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+  DecidableRel (fromPermutation σ).blackEdgesGraph.Adj := by
+  intro x y
+  dsimp only [fromPermutation, isConsecutive.eq_1]
+  exact instDecidableAnd
+
+instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+  DecidableRel (fromPermutation σ).grayEdgesGraph.Adj := by
+  intro x y
+  dsimp only [fromPermutation, isConsecutive.eq_1]
+  exact instDecidableAnd
+
+
+variable {σ : Equiv.Perm (Fin n)}
+
 
 
 
