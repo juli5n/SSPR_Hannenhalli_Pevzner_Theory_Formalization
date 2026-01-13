@@ -25,4 +25,16 @@ def fromPermutation {n : ℕ} (σ : Equiv.Perm (Fin n))
   : TwoColoredGraph (n := n+2) :=
   fromPermutationDirect (addFrameToPermutation σ)
 
+instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+  DecidableRel (fromPermutation σ).blackEdgesGraph.Adj := by
+  intro x y
+  dsimp only [fromPermutation, isConsecutive.eq_1]
+  exact instDecidableAnd
+
+instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+  DecidableRel (fromPermutation σ).grayEdgesGraph.Adj := by
+  intro x y
+  dsimp only [fromPermutation, isConsecutive.eq_1]
+  exact instDecidableAnd
+
 end SSPRHannenhalliPevznerTheory.CycleGraph
