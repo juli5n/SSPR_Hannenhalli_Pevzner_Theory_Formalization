@@ -5,14 +5,6 @@ import Mathlib.Combinatorics.SimpleGraph.Paths
 import Mathlib.Data.List.MinMax
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
 
-/-!
-# Interleaving Graph of Alternating Cycles
-
-This file defines the interleaving graph of a two-colored graph, specifically for the
-Hannenhalli-Pevzner theory. The nodes of this graph are alternating cycles, and edges
-exist between cycles if their gray edges interleave.
-
--/
 
 namespace SSPRHannenhalliPevznerTheory.InterleavingGraph
 
@@ -24,6 +16,23 @@ structure Vertex {n : ℕ} (G : TwoColoredGraph (n := n)) where
   walk : G.fullGraph.Walk baseNode baseNode
   is_alternating_cycle : isAlternatingCycle walk
   base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
+
+/-
+structure CycleVertex' {n : ℕ} (G : SimpleGraph (Fin n)) where
+  baseNode : Fin n
+  walk : G.Walk baseNode baseNode
+  is_cycle: walk.IsCycle
+  base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
+
+structure CycleVertex {n : ℕ} (G : SimpleGraph (Fin n)) where
+  baseNode : Fin n
+  property : ∃ (walk : G.Walk baseNode baseNode),
+  walk.IsCycle ∧
+  ∀ v ∈ walk.support, baseNode ≤ v
+  -- walk : G.Walk baseNode baseNode
+  -- is_cycle: walk.IsCycle
+  -- base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
+-/
 
 namespace Vertex
 

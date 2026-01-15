@@ -40,7 +40,6 @@ instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   exact instDecidableAnd
 
 
-variable {σ : Equiv.Perm (Fin n)}
 
 
 
