@@ -81,7 +81,7 @@ structure Reversal {n : ℕ} where
   end_index : Fin n
   start_index_le_end_index : start_index ≤ end_index
 
-private def Reversal.permutationFunction {n : ℕ} (reversal : Reversal (n := n))
+def Reversal.permutationFunction {n : ℕ} (reversal : Reversal (n := n))
   (i : Fin n) : Fin n :=
   if index_within_reversal_segment : reversal.start_index ≤ i ∧ i ≤ reversal.end_index then
     ({

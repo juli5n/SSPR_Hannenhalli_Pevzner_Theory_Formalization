@@ -715,4 +715,30 @@ def Reversal.scaleUp {n : ℕ} (reversal : Reversal (n := n)) : Reversal (n := 2
 instance {n : ℕ} : HSMul (Reversal (n := n)) (Equiv.Perm (Fin (2*n))) (Equiv.Perm (Fin (2*n))) where
   hSMul reversal unsigned_permutation := unsigned_permutation * reversal.scaleUp.permutation
 
+
+instance {n : ℕ} : HSMul
+  (Reversal (n := n))
+  (UnsignedRepresentationOfSP (n:=n))
+  (UnsignedRepresentationOfSP (n:=n)) where
+  hSMul reversal unsigned_representation :=
+  {
+    val := reversal • unsigned_representation.val
+    property := by
+      intro i
+
+      dsimp only [HSMul.hSMul]
+      dsimp only [Reversal.permutation]
+      simp only [Equiv.Perm.coe_mul, Equiv.coe_fn_mk, Function.comp_apply]
+      dsimp only [Reversal.permutationFunction]
+      dsimp only [Reversal.scaleUp]
+      split_ifs with if1 if2
+
+      · sorry
+      · sorry
+      · sorry
+      · sorry
+
+
+  }
+
 end SSPRHannenhalliPevznerTheory
