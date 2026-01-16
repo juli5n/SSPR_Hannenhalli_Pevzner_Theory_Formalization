@@ -121,6 +121,9 @@ def Reversal.permutation {n : ℕ} (reversal : Reversal (n := n)) : (Equiv.Perm 
         omega
   })
 
+
+
+
 /-- Applies a reversal to a `SignFunction` of a `SignedPermutation`,
 i.e. flips the signs of the elements in the segment affected by the reversal. -/
 def SignFunction.applyReversal {n : ℕ} (sign_function : SignFunction n)

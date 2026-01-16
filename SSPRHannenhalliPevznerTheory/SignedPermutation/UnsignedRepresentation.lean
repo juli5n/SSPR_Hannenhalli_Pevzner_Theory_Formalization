@@ -699,3 +699,20 @@ def result_UP3 := test_SP3.toUnsignedDirect
   result_UP3.symm (result_UP3 x)
 )
   -/
+
+
+def Reversal.scaleUp {n : ℕ} (reversal : Reversal (n := n)) : Reversal (n := 2 * n) :=
+  {
+    start_index := ⟨reversal.start_index * 2, by omega⟩
+    end_index := ⟨reversal.end_index * 2 + 1, by omega⟩
+    start_index_le_end_index := by
+      apply Fin.val_le_of_le
+      simp only [Fin.mk_le_mk]
+      have := reversal.start_index_le_end_index
+      omega
+  }
+
+instance {n : ℕ} : HSMul (Reversal (n := n)) (Equiv.Perm (Fin (2*n))) (Equiv.Perm (Fin (2*n))) where
+  hSMul reversal unsigned_permutation := unsigned_permutation * reversal.scaleUp.permutation
+
+end SSPRHannenhalliPevznerTheory

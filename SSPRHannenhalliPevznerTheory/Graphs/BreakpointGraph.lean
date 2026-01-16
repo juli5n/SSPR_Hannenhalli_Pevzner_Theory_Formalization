@@ -1,6 +1,7 @@
 import SSPRHannenhalliPevznerTheory.Basic
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
 import SSPRHannenhalliPevznerTheory.DisjointCycles
+import SSPRHannenhalliPevznerTheory.SignedPermutation.Basic
 
 
 namespace SSPRHannenhalliPevznerTheory
@@ -52,5 +53,20 @@ noncomputable def max_disjoint_cycles {n : ℕ} (σ : Equiv.Perm (Fin n)) : ℕ 
 
 scoped notation "b(" π ")" => num_breakpoints π
 scoped notation "c(" π ")" => max_disjoint_cycles π
+
+noncomputable def delta_max_disjoint_cycles {n : ℕ}
+(π : Equiv.Perm (Fin n)) (ρ : Reversal (n := n)) : ℤ :=
+  (max_disjoint_cycles (ρ • π) : ℤ) - (max_disjoint_cycles π : ℤ)
+
+noncomputable def delta_num_breakpoints {n : ℕ}
+(π : Equiv.Perm (Fin n)) (ρ : Reversal (n := n)) : ℤ :=
+  (max_disjoint_cycles (ρ • π) : ℤ) - (max_disjoint_cycles π : ℤ)
+
+scoped notation "Δb(" π ", " ρ ")" => delta_num_breakpoints π ρ
+scoped notation "Δc(" π ", " ρ ")" => delta_max_disjoint_cycles π ρ
+
+def Reversal.Proper {n : ℕ} (reversal : Reversal (n := n))
+(π : Equiv.Perm (Fin n)) : Prop :=
+  Δb(π,reversal) - Δc(π,reversal) = -1
 
 end SSPRHannenhalliPevznerTheory

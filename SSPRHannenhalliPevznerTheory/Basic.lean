@@ -17,6 +17,5 @@ isConsecutive a b ↔ isConsecutive b a := by
   unfold isConsecutive
   tauto
 
-abbrev UnsignedPermutation (n : ℕ) := Equiv.Perm (Fin n)
 
 end SSPRHannenhalliPevznerTheory
