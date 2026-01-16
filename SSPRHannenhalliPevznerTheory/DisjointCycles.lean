@@ -15,15 +15,14 @@ structure Cycle {n : ℕ} (graph : SimpleGraph (Fin n)) where
   walk : graph.Walk baseNode baseNode
   is_cycle: walk.IsCycle
 
-structure DisjointCyclesIn {n : ℕ} (G : SimpleGraph (Fin n)) where
+structure DisjointCycles {n : ℕ} (G : SimpleGraph (Fin n)) where
   Cycles : Finset (Cycle G)
   cycles_pairwise_disjoint :
     (SetLike.coe Cycles).PairwiseDisjoint (fun cycle ↦ cycle.walk.edgeSet)
-  -- cycles_are_disjoint : ∀ (c₁ c₂ : Cycles), c₁ ≠ c₂ →
-  --   Disjoint c₁.1.walk.edgeSet c₂.1.walk.edgeSet
 
+namespace DisjointCycles
 
-def emptyDisjointCycles {n : ℕ} (G : SimpleGraph (Fin n)) : DisjointCyclesIn G :=
+def empty {n : ℕ} (G : SimpleGraph (Fin n)) : DisjointCycles G :=
   {
     Cycles := {}
     cycles_pairwise_disjoint := by
@@ -32,10 +31,12 @@ def emptyDisjointCycles {n : ℕ} (G : SimpleGraph (Fin n)) : DisjointCyclesIn G
       contradiction
   }
 
+end DisjointCycles
+
 
 open Classical in
-theorem cycle_amount_bounded_by_edges {n : ℕ}
-  {G : SimpleGraph (Fin n)} (disjoint_cycles : DisjointCyclesIn G) :
+theorem three_mul_card_cycles_le_card_edgeFinset {n : ℕ}
+  {G : SimpleGraph (Fin n)} (disjoint_cycles : DisjointCycles G) :
   3 * disjoint_cycles.Cycles.card ≤ G.edgeFinset.card := by
 
   rw [mul_comm, ← smul_eq_mul]
@@ -90,14 +91,14 @@ theorem cycle_amount_bounded_by_edges {n : ℕ}
 
 
 
-noncomputable def MaximumNumberOfDisjointCycles
+noncomputable def maxDisjointCycleCount
   {n : ℕ} (G : SimpleGraph (Fin n)) : ℕ := by
 
   have exists_some_set_of_disjoint_cycles : ∃ (n : ℕ),
-    ∃ (disjoint_cycles : DisjointCyclesIn G), disjoint_cycles.Cycles.card = n := by sorry
+    ∃ (disjoint_cycles : DisjointCycles G), disjoint_cycles.Cycles.card = n := by sorry
 
   let possible_cycle_counts : Set ℕ :=
-    { n | ∃ (disjoint_cycles : DisjointCyclesIn G), disjoint_cycles.Cycles.card = n }
+    { n | ∃ (disjoint_cycles : DisjointCycles G), disjoint_cycles.Cycles.card = n }
 
 
   open Classical in
@@ -113,14 +114,14 @@ noncomputable def MaximumNumberOfDisjointCycles
     intro n n_possible_cycle_count
     rw [Set.mem_setOf_eq] at n_possible_cycle_count
     obtain ⟨disjoint_cycles, _⟩ := n_possible_cycle_count
-    have := cycle_amount_bounded_by_edges disjoint_cycles
+    have := three_mul_card_cycles_le_card_edgeFinset disjoint_cycles
     linarith
 
   have possible_cycle_counts_nonempty : possible_cycle_counts.Nonempty := by
     use 0
     rw [Set.mem_setOf_eq]
-    use emptyDisjointCycles G
-    unfold emptyDisjointCycles
+    use DisjointCycles.empty G
+    unfold DisjointCycles.empty
     exact Finset.card_empty
 
   exact possible_cycle_counts_finite.toFinset.max' (by

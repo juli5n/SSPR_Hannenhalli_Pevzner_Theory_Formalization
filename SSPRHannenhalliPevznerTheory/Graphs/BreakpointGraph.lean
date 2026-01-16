@@ -1,5 +1,6 @@
 import SSPRHannenhalliPevznerTheory.Basic
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
+import SSPRHannenhalliPevznerTheory.DisjointCycles
 
 
 namespace SSPRHannenhalliPevznerTheory
@@ -40,9 +41,16 @@ instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   exact instDecidableAnd
 
 
-
-
-
-
 end BreakpointGraph
+
+def num_breakpoints {n : ℕ} (σ : Equiv.Perm (Fin n)) : ℕ :=
+  (BreakpointGraph.fromPermutation σ).blackEdgesGraph.edgeFinset.card
+
+noncomputable def max_disjoint_cycles {n : ℕ} (σ : Equiv.Perm (Fin n)) : ℕ :=
+  maxDisjointCycleCount (BreakpointGraph.fromPermutation σ).fullGraph
+
+
+scoped notation "b(" π ")" => num_breakpoints π
+scoped notation "c(" π ")" => max_disjoint_cycles π
+
 end SSPRHannenhalliPevznerTheory

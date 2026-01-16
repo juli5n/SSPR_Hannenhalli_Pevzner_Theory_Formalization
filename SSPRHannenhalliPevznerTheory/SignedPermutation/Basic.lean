@@ -142,6 +142,27 @@ def SignedPermutation.applyReversal {n : ℕ} (signed_permutation : SignedPermut
     signs := signed_permutation.signs.applyReversal reversal
   } : SignedPermutation n)
 
+
+instance {n : ℕ} : HSMul (Reversal (n := n)) (SignedPermutation n) (SignedPermutation n) where
+  hSMul reversal signed_permutation := signed_permutation.applyReversal reversal
+
+instance {n : ℕ} : HSMul (Reversal (n := n)) (Equiv.Perm (Fin n)) (Equiv.Perm (Fin n)) where
+  hSMul reversal unsigned_permutation := unsigned_permutation * reversal.permutation
+
+
+
+section
+variable {n : ℕ}
+{unsigned_permutation : Equiv.Perm (Fin n)}
+{signed_permutation : SignedPermutation (n := n)}
+{reversal : Reversal (n := n)}
+
+#check (reversal • unsigned_permutation)
+#check (reversal • signed_permutation)
+
+
+end
+
 /-- For every `SignedPermutation` exists a sequence of `Reversal`s that "sorts" it,
 i.e. transforms it into the signed identity permutation. -/
 def SignedPermutation.sortable {n : ℕ} (π : SignedPermutation (n := n)) :
