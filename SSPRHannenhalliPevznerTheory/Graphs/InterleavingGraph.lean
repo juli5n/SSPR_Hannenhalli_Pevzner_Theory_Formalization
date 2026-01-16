@@ -9,54 +9,48 @@ import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 /-!
 # Interleaving Graph of Alternating Cycles
 
-This file defines the interleaving graph of a two-colored graph, specifically for the
-Hannenhalli-Pevzner theory. The nodes of this graph are alternating cycles, and edges
-exist between cycles if their gray edges interleave.
-
+This file defines the interleaving graph of a two-colored graph using
+the connected components as vertices. This is equivalent to using the
+cycles in the breakpoint graph in the case of unsigned
+permutations that represent signed permutation.
+Edges exist between two vertices if the connected components contain gray edges that interleave.
 -/
 
 namespace SSPRHannenhalliPevznerTheory.InterleavingGraph
 
 /-- Helper function to map an undirected edge
 to an ordered pair (min, max). -/
-def sym2ToInterval {n : ℕ} (e : Sym2 (Fin n)) : Fin n × Fin n :=
-  e.lift ⟨fun u v => (min u v, max u v), by
-    intros u v
+def sym2ToInterval {n : ℕ} (edge : Sym2 (Fin n)) : Fin n × Fin n :=
+  edge.lift ⟨fun u v => (min u v, max u v), by
+    intro vertex₁ vertex₂
     dsimp only
     rw [min_comm, max_comm]⟩
 
 /-- Two edges `e₁` and `e₂` interleave if their endpoints
 are interlaced in the linear order of `Fin n`. -/
-def edgesInterleave {n : ℕ} (e₁ e₂ : Sym2 (Fin n)) : Prop :=
-  let (u₁, v₁) := sym2ToInterval e₁
-  let (u₂, v₂) := sym2ToInterval e₂
+def edgesInterleave {n : ℕ} (edge₁ edge₂ : Sym2 (Fin n)) : Prop :=
+  let (u₁, v₁) := sym2ToInterval edge₁
+  let (u₂, v₂) := sym2ToInterval edge₂
   (u₁ < u₂ ∧ u₂ < v₁ ∧ v₁ < v₂) ∨ (u₂ < u₁ ∧ u₁ < v₂ ∧ v₂ < v₁)
 
-/-- The geometric interleaving relation is commutative. -/
-theorem edgesInterleave_comm {n : ℕ} (e₁ e₂ : Sym2 (Fin n)) :
-    edgesInterleave e₁ e₂ ↔ edgesInterleave e₂ e₁ := by
+/-- Interleaving relation on edges is commutative. -/
+theorem edgesInterleave_comm {n : ℕ} (edge₁ edge₂ : Sym2 (Fin n)) :
+    edgesInterleave edge₁ edge₂ ↔ edgesInterleave edge₂ edge₁ := by
   unfold edgesInterleave
   tauto
 
-namespace edgesInterleave
-
-theorem comm {n : ℕ} {e₁ e₂ : Sym2 (Fin n)} (h : edgesInterleave e₁ e₂) :
-  edgesInterleave e₂ e₁ := by
-  exact (edgesInterleave_comm e₁ e₂).mp h
-
-end edgesInterleave
-
+/-- What it means that an edge is gray and lies in a connected component. -/
 def isGrayEdgeOfComponent {n : ℕ} (G : TwoColoredGraph (n := n))
     (component : G.fullGraph.ConnectedComponent) (edge : Sym2 (Fin n)) : Prop :=
   edge ∈ G.grayEdgesGraph.edgeSet ∧
   (edge : Set (Fin n)) ⊆ (component : Set (Fin n))
 
 def ComponentsInterleave {n : ℕ} (G : TwoColoredGraph (n := n))
-    (c₁ c₂ : G.fullGraph.ConnectedComponent) : Prop :=
-  c₁ ≠ c₂ ∧
-  ∃ e₁ e₂, isGrayEdgeOfComponent G c₁ e₁ ∧
-           isGrayEdgeOfComponent G c₂ e₂ ∧
-           edgesInterleave e₁ e₂
+    (comp₁ comp₂ : G.fullGraph.ConnectedComponent) : Prop :=
+  comp₁ ≠ comp₂ ∧
+  ∃ edge₁ edge₂, isGrayEdgeOfComponent G comp₁ edge₁ ∧
+           isGrayEdgeOfComponent G comp₂ edge₂ ∧
+           edgesInterleave edge₁ edge₂
 
 /--
 The interleaving graph $H_G$ where nodes are alternating cycles.
@@ -69,15 +63,15 @@ def InterleavingGraphRepresented {n : ℕ} (G : TwoColoredGraph (n := n))
     SimpleGraph (G.fullGraph.ConnectedComponent) where
   Adj := ComponentsInterleave G
   symm := by
-    intro component₁ component₂ components_interleave
-    rcases components_interleave with
-      ⟨components_ne, edge₁, edge₂, edge₁_in_component₁, edge₂_in_component₂, edges_interleave⟩
-    refine ⟨components_ne.symm, edge₂, edge₁, edge₂_in_component₂, edge₁_in_component₁, ?_⟩
-    apply edgesInterleave.comm
+    intro comp₁ comp₂ comps_interleave
+    rcases comps_interleave with
+      ⟨comps_ne, edge₁, edge₂, edge₁_in_comp₁, edge₂_in_comp₂, edges_interleave⟩
+    refine ⟨comps_ne.symm, edge₂, edge₁, edge₂_in_comp₂, edge₁_in_comp₁, ?_⟩
+    rw [edgesInterleave_comm]
     exact edges_interleave
 
   loopless := by
-    intros component interleave_itself
+    intro component interleave_itself
     exact interleave_itself.1 rfl
 
 end SSPRHannenhalliPevznerTheory.InterleavingGraph
