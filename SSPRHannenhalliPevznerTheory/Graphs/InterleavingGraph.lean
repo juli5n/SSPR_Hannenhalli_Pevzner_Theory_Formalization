@@ -4,101 +4,74 @@ import Mathlib.Combinatorics.SimpleGraph.Walks.Subwalks
 import Mathlib.Combinatorics.SimpleGraph.Paths
 import Mathlib.Data.List.MinMax
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
+import Mathlib.Combinatorics.SimpleGraph.Connectivity.Connected
 
+/-!
+# Interleaving Graph of Alternating Cycles
+
+This file defines the interleaving graph of a two-colored graph using
+the connected components as vertices. This is equivalent to using the
+cycles in the breakpoint graph in the case of unsigned
+permutations that represent signed permutation.
+Edges exist between two vertices if the connected components contain gray edges that interleave.
+-/
 
 namespace SSPRHannenhalliPevznerTheory.InterleavingGraph
 
-open TwoColoredGraph
-
-
-structure Vertex {n : ℕ} (G : TwoColoredGraph (n := n)) where
-  baseNode : Fin n
-  walk : G.fullGraph.Walk baseNode baseNode
-  is_alternating_cycle : isAlternatingCycle walk
-  base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
-
-/-
-structure CycleVertex' {n : ℕ} (G : SimpleGraph (Fin n)) where
-  baseNode : Fin n
-  walk : G.Walk baseNode baseNode
-  is_cycle: walk.IsCycle
-  base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
-
-structure CycleVertex {n : ℕ} (G : SimpleGraph (Fin n)) where
-  baseNode : Fin n
-  property : ∃ (walk : G.Walk baseNode baseNode),
-  walk.IsCycle ∧
-  ∀ v ∈ walk.support, baseNode ≤ v
-  -- walk : G.Walk baseNode baseNode
-  -- is_cycle: walk.IsCycle
-  -- base_node_is_support_min : ∀ v ∈ walk.support, baseNode ≤ v
--/
-
-namespace Vertex
-
-def getGrayEdges {n : ℕ} {G : TwoColoredGraph (n := n)}
-  (vertex : Vertex G)
-  [DecidableRel G.grayEdgesGraph.Adj] :
-    Finset (Sym2 (Fin n)) :=
-  vertex.walk.edges.toFinset.filter (fun e => e ∈ G.grayEdgesGraph.edgeSet)
-
-end Vertex
-
-
 /-- Helper function to map an undirected edge
 to an ordered pair (min, max). -/
-def sym2ToInterval {n : ℕ} (e : Sym2 (Fin n)) : Fin n × Fin n :=
-  e.lift ⟨fun u v => (min u v, max u v), by
-    intros u v
+def sym2ToInterval {n : ℕ} (edge : Sym2 (Fin n)) : Fin n × Fin n :=
+  edge.lift ⟨fun u v => (min u v, max u v), by
+    intro vertex₁ vertex₂
     dsimp only
     rw [min_comm, max_comm]⟩
 
 /-- Two edges `e₁` and `e₂` interleave if their endpoints
 are interlaced in the linear order of `Fin n`. -/
-def edgesInterleave {n : ℕ} (e₁ e₂ : Sym2 (Fin n)) : Prop :=
-  let (u₁, v₁) := sym2ToInterval e₁
-  let (u₂, v₂) := sym2ToInterval e₂
+def edgesInterleave {n : ℕ} (edge₁ edge₂ : Sym2 (Fin n)) : Prop :=
+  let (u₁, v₁) := sym2ToInterval edge₁
+  let (u₂, v₂) := sym2ToInterval edge₂
   (u₁ < u₂ ∧ u₂ < v₁ ∧ v₁ < v₂) ∨ (u₂ < u₁ ∧ u₁ < v₂ ∧ v₂ < v₁)
 
-/-- The geometric interleaving relation is commutative. -/
-theorem edgesInterleave_comm {n : ℕ} (e₁ e₂ : Sym2 (Fin n)) :
-    edgesInterleave e₁ e₂ ↔ edgesInterleave e₂ e₁ := by
+/-- Interleaving relation on edges is commutative. -/
+theorem edgesInterleave_comm {n : ℕ} (edge₁ edge₂ : Sym2 (Fin n)) :
+    edgesInterleave edge₁ edge₂ ↔ edgesInterleave edge₂ edge₁ := by
   unfold edgesInterleave
   tauto
 
-namespace edgesInterleave
+/-- What it means that an edge is gray and lies in a connected component. -/
+def isGrayEdgeOfComponent {n : ℕ} (G : TwoColoredGraph (n := n))
+    (component : G.fullGraph.ConnectedComponent) (edge : Sym2 (Fin n)) : Prop :=
+  edge ∈ G.grayEdgesGraph.edgeSet ∧
+  (edge : Set (Fin n)) ⊆ (component : Set (Fin n))
 
-theorem comm {n : ℕ} {e₁ e₂ : Sym2 (Fin n)} (h : edgesInterleave e₁ e₂) :
-  edgesInterleave e₂ e₁ := by
-  exact (edgesInterleave_comm e₁ e₂).mp h
-
-end edgesInterleave
-
+def ComponentsInterleave {n : ℕ} (G : TwoColoredGraph (n := n))
+    (comp₁ comp₂ : G.fullGraph.ConnectedComponent) : Prop :=
+  comp₁ ≠ comp₂ ∧
+  ∃ edge₁ edge₂, isGrayEdgeOfComponent G comp₁ edge₁ ∧
+           isGrayEdgeOfComponent G comp₂ edge₂ ∧
+           edgesInterleave edge₁ edge₂
 
 /--
 The interleaving graph $H_G$ where nodes are alternating cycles.
 Two cycles are adjacent if they are distinct and have at least one pair of
-interleaving gray edges.
+interleaving gray edges. We only consider the case of signed permutations represented by
+unsigned permutations so this corresponds to the connected components
 -/
-def InterleavingGraph {n : ℕ} (G : TwoColoredGraph (n := n))
+def InterleavingGraphRepresented {n : ℕ} (G : TwoColoredGraph (n := n))
   [DecidableRel G.grayEdgesGraph.Adj] :
-    SimpleGraph (Vertex G) where
-  Adj Vertex₁ Vertex₂ :=
-    let grayEdges₁ := Vertex₁.getGrayEdges
-    let grayEdges₂ := Vertex₂.getGrayEdges
-
-    (Vertex₁.getGrayEdges ≠ Vertex₂.getGrayEdges) ∧
-    (∃ e₁ ∈ Vertex₁.getGrayEdges, ∃ e₂ ∈ Vertex₂.getGrayEdges, edgesInterleave e₁ e₂)
-
+    SimpleGraph (G.fullGraph.ConnectedComponent) where
+  Adj := ComponentsInterleave G
   symm := by
-    intros cycle₁ cycle₂ h
-    rcases h with ⟨cycles_ne, grey₁, grey₁_in_cycle, grey₂, grey₂_in_cycle, interleave_1_and_2⟩
-    refine ⟨cycles_ne.symm, grey₂, grey₂_in_cycle, grey₁, grey₁_in_cycle, ?_⟩
+    intro comp₁ comp₂ comps_interleave
+    rcases comps_interleave with
+      ⟨comps_ne, edge₁, edge₂, edge₁_in_comp₁, edge₂_in_comp₂, edges_interleave⟩
+    refine ⟨comps_ne.symm, edge₂, edge₁, edge₂_in_comp₂, edge₁_in_comp₁, ?_⟩
     rw [edgesInterleave_comm]
-    exact interleave_1_and_2
+    exact edges_interleave
 
   loopless := by
-    intros cycle h
-    exact h.1 rfl
+    intro component interleave_itself
+    exact interleave_itself.1 rfl
 
 end SSPRHannenhalliPevznerTheory.InterleavingGraph
