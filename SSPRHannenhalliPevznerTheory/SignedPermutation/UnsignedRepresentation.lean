@@ -35,10 +35,28 @@ namespace UnsignedRepresentationOfSP
 
 /-- An equivalent reformulation of `UnsignedRepresentationOfSP.property`. -/
 def property' {n : ℕ}
-  (unsigned_representation : UnsignedRepresentationOfSP (n := n)) :
-  ∀ (x : Fin (2*n)), ∀ (y : Fin (2*n)), x≠y → ((x.val/2) = (y.val/2)) →
-  isConsecutive (unsigned_representation x) (unsigned_representation y) := by
-  sorry
+    (unsigned_representation : UnsignedRepresentationOfSP (n := n)) :
+    ∀ (x : Fin (2*n)), ∀ (y : Fin (2*n)), x≠y → ((x.val/2) = (y.val/2)) →
+    isConsecutive (unsigned_representation x) (unsigned_representation y) := by
+  intro x y x_ne_y x_half_eq_y_half
+  have : x.val < y.val ∨ y.val < x.val := by omega
+  obtain x_lt_y | y_lt_x := this
+  · have x_plus_1_eq_y : x.val + 1 = y.val := by omega
+    simp only [isConsecutive]
+    obtain ⟨k, k_times_2_eq_x | k_times_2_plus_one_eq_x⟩ := Nat.even_or_odd' x.val
+    · have := unsigned_representation.property ⟨k, by omega⟩
+      simp_rw[← k_times_2_eq_x, x_plus_1_eq_y] at this
+      exact this
+    · have := unsigned_representation.property ⟨k, by omega⟩
+      omega
+  · have y_plus_1_eq_x : y.val + 1 = x.val := by omega
+    simp only [isConsecutive]
+    obtain ⟨k, y_eq_2_times_k | y_eq_2_times_k_plus_one⟩ := Nat.even_or_odd' y.val
+    · have := unsigned_representation.property ⟨k, by omega⟩
+      simp_rw[← y_eq_2_times_k, y_plus_1_eq_x] at this
+      exact Or.symm this
+    · have := unsigned_representation.property ⟨k, by omega⟩
+      omega
 
 end UnsignedRepresentationOfSP
 
