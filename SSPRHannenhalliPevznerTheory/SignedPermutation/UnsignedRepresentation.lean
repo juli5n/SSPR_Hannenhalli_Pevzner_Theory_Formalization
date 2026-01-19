@@ -731,13 +731,26 @@ instance {n : ℕ} : HSMul
       simp only [Equiv.Perm.coe_mul, Equiv.coe_fn_mk, Function.comp_apply]
       dsimp only [Reversal.permutationFunction]
       dsimp only [Reversal.scaleUp]
+      simp only [Fin.mk_le_mk, add_le_add_iff_right, isConsecutive]
       split_ifs with if1 if2
-
-      · sorry
-      · sorry
-      · sorry
-      · sorry
-
+      · apply UnsignedRepresentationOfSP.property'
+        · rw [Fin.ne_iff_vne]
+          dsimp only
+          omega
+        · dsimp only
+          omega
+      · apply UnsignedRepresentationOfSP.property'
+        · omega
+        · omega
+      · apply UnsignedRepresentationOfSP.property'
+        · omega
+        · omega
+      · apply UnsignedRepresentationOfSP.property'
+        · rw [Fin.ne_iff_vne]
+          dsimp only
+          exact Nat.two_mul_ne_two_mul_add_one
+        · dsimp only
+          omega
 
   }
 

@@ -12,7 +12,7 @@ one is the successor of the other
 def isConsecutive (a b : ℕ) : Prop :=
 a = b + 1 ∨ b = a + 1
 
-def isConsecutive.refl {n : ℕ} (a b : Fin n) :
+def isConsecutive.comm {n : ℕ} (a b : Fin n) :
 isConsecutive a b ↔ isConsecutive b a := by
   unfold isConsecutive
   tauto
