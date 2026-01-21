@@ -100,7 +100,21 @@ theorem eq_iff {n : ℕ} {x : Fin (2 * n)} {y : Fin (2 * n)} :
 
 theorem odd_iff {n : ℕ} {x : Fin (2 * n)} :
   Odd x.val ↔ Even (toggleLSB x).val := by
-  sorry
+  unfold toggleLSB
+  constructor
+  · intro x_odd
+    dsimp
+    rw [Nat.odd_iff.mp x_odd]
+    dsimp
+    refine Nat.Odd.sub_odd x_odd ?_
+    exact Nat.odd_iff.mpr rfl
+  · dsimp
+    intro even_if_condition
+    by_contra x_even
+    simp_rw [Nat.not_odd_iff.mp x_even] at even_if_condition
+    dsimp at even_if_condition
+    rw [Nat.even_add_one, Nat.not_even_iff_odd] at even_if_condition
+    exact x_even even_if_condition
 
 
 end toggleLSB

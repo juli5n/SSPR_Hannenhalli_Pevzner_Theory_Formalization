@@ -41,6 +41,14 @@ instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   dsimp only [fromPermutationDirect, fromPermutation, isConsecutive.eq_1]
   exact instDecidableAnd
 
+lemma deg_le_two {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex ≤ 2 := by sorry
+
+lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex =
+    (fromPermutation σ).grayEdgesGraph.degree vertex := by sorry
+
+
 
 end BreakpointGraph
 
