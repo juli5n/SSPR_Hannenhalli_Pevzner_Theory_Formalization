@@ -441,22 +441,29 @@ theorem sortingStep_sorts {n : ℕ} (π : SignedPermutation n) (k : Fin n)
         rw [π.reversal_passes_sign_outside_range ρ i i_not_in_range]
         exact (first_k_sorted i i_lt_k).2
 
-/- todo: ideas of how to construct the reversals explicitly
-private def recursive_simple_sort {n : ℕ} : sorry := sorry
+
+structure k_sorting_reversals {n : ℕ} (π : SignedPermutation n) (k : ℕ) where
+  reversals : List (Reversal (n := n))
+  sorts_up_to_k : IsSortedUpTo (reversals.foldl SignedPermutation.applyReversal π) k
+
+private def recursive_simple_sort {n : ℕ} (π : SignedPermutation n) (k : ℕ)
+    (sorting_reversals : k_sorting_reversals π k) :
+    if k = n then k_sorting_reversals π n else k_sorting_reversals π (k + 1) := sorry
 
 def simple_sort_by_signed_permutations {n : ℕ} (π : SignedPermutation (n := n)) :
-  List (Reversal (n := n)) := sorry
+    k_sorting_reversals π n := sorry
 
-lemma simple_sort_sorts {n : ℕ} (π : SignedPermutation n) :
-    (simple_sort_by_signed_permutations π).foldl SignedPermutation.applyReversal π =
+lemma simple_sort_sorts {n : ℕ} (π : SignedPermutation n)
+    (k_sorting_reversals : k_sorting_reversals π n) :
+    (k_sorting_reversals.reversals.foldl SignedPermutation.applyReversal π) =
     SignedPermutation.identity n := sorry
--/
+
 
 /-- For every `SignedPermutation` exists a sequence of `Reversal`s that "sorts" it,
 i.e. transforms it into the signed identity permutation. -/
 theorem SignedPermutation.sortable {n : ℕ} (π : SignedPermutation (n := n)) :
-    ∃ reversal_list : List (Reversal (n := n)),
-    (SignedPermutation.identity n) = (reversal_list.foldl SignedPermutation.applyReversal π) := by
+    ∃ reversals : List (Reversal (n := n)),
+    (SignedPermutation.identity n) = (reversals.foldl SignedPermutation.applyReversal π) := by
   sorry
 
 
