@@ -68,6 +68,23 @@ def toggleLSB {n : ℕ} (x : Fin (2 * n)) : Fin (2*n) :=
 
 namespace toggleLSB
 
+private lemma even_succ_lt_2n {n : ℕ} (x : Fin (2 * n))
+    (x_even : Even x.val) : x.val + 1 < 2 * n := by
+  obtain ⟨ k, hk ⟩ := even_iff_exists_two_mul.mp x_even
+  omega
+
+theorem at_even {n : ℕ} (x : Fin (2 * n)) (x_even : Even x.val) :
+    toggleLSB x = ⟨x + 1, even_succ_lt_2n x x_even⟩ := by
+  unfold toggleLSB
+  rw [Nat.even_iff] at x_even
+  simp only [x_even, ↓reduceIte]
+
+theorem at_odd {n : ℕ} (x : Fin (2 * n)) (x_odd : Odd x.val) :
+    toggleLSB x = ⟨x - 1, by omega⟩ := by
+  unfold toggleLSB
+  rw [Nat.odd_iff] at x_odd
+  simp only [x_odd, one_ne_zero, ↓reduceIte]
+
 /-- Division by two is invariant under `toggleLSB` since
 the toggled bit is shifted away during the division. -/
 theorem div_two_eq {n : ℕ} (x : Fin (2 * n)) : ((x/2) : ℕ) = ((toggleLSB x)/2 : ℕ) := by
@@ -328,8 +345,6 @@ private theorem UnsignedRepresentationOfSP.min_of_toggleLSB_pair_image_is_even
   rw [preimage_image_x_eq_x] at this
   exact this
 
-
-
 /-- A permutation that represents a signed permutation commutes with
 `toggleLSB` -/
 theorem UnsignedRepresentationOfSP.map_toggleLSB
@@ -365,6 +380,7 @@ theorem UnsignedRepresentationOfSP.map_toggleLSB
         contradiction
       · exact Nat.le_add_right (↑(representation x)) 1
 
+
 /-- If the image of x is even under an `UnsignedRepresentationOfSP` σ',
 then σ'(`toggleLSB`(x)) = σ'(x)+1. -/
 theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_even
@@ -396,11 +412,52 @@ theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   simp only [image_x_odd, one_ne_zero, ↓reduceIte] at this
   exact this
 
-theorem UnsignedRepresentationOfSP.div_two_eq_toggleLSB_div_two
-  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2*n)):
-  (representation x).val / 2 = (representation (toggleLSB x)).val / 2 := by
+theorem UnsignedRepresentationOfSP.im_toggle_pair_is_even_even_succ
+    {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2 * n)) :
+    ∃ (k : Fin n),
+    ((representation x = ⟨ 2 * k, by omega ⟩) ∧
+    representation (toggleLSB x) = ⟨ 2 * k + 1, by omega⟩) ∨
+    ((representation x = ⟨ 2 * k + 1, by omega⟩ ∧
+    representation (toggleLSB x) = ⟨ 2 * k, by omega ⟩)) := by
+  by_cases repr_x_even : Even (representation x).val
+  · obtain ⟨ k, repr_x_eq_2k⟩ := even_iff_exists_two_mul.mp repr_x_even
+    use ⟨k, by omega⟩
+    left
+    constructor
+    · rw [Fin.ext_iff]
+      exact repr_x_eq_2k
+    · rw [representation.map_toggleLSB x]
+      have : representation.val x = ⟨2 * k, by omega⟩ := Fin.eq_mk_iff_val_eq.mpr repr_x_eq_2k
+      rw [this]
+      dsimp
+      apply toggleLSB.at_even
+      exact even_two_mul k
+  · rw [Nat.not_even_iff_odd] at repr_x_even
+    obtain ⟨ k, repr_x_eq_succ_2k⟩ := odd_iff_exists_bit1.mp repr_x_even
+    use ⟨k, by omega⟩
+    right
+    constructor
+    · rw [Fin.ext_iff]
+      exact repr_x_eq_succ_2k
+    · rw [representation.map_toggleLSB x]
+      have : representation.val x = ⟨2 * k + 1, by omega⟩ := Fin.eq_mk_iff_val_eq.mpr
+        repr_x_eq_succ_2k
+      rw [this]
+      dsimp
+      apply toggleLSB.at_odd
+      exact odd_two_mul_add_one k
 
-  sorry
+
+theorem UnsignedRepresentationOfSP.div_two_eq_toggleLSB_div_two
+    {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2 * n)) :
+    (representation x).val / 2 = (representation (toggleLSB x)).val / 2 := by
+  obtain ⟨k, repr_x_eq_2k | repr_x_eq_succ_2k⟩ := representation.im_toggle_pair_is_even_even_succ x
+  · rw [repr_x_eq_2k.1, repr_x_eq_2k.2]
+    dsimp
+    omega
+  · rw [repr_x_eq_succ_2k.1, repr_x_eq_succ_2k.2]
+    dsimp
+    omega
 
 
 /-theorem UnsignedRepresentationOfSP.minOfPairIsEven
