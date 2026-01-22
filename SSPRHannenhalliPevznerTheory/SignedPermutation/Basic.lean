@@ -72,6 +72,7 @@ An example of a signed permutation is $\{-2, +1, +3\}$.
 
 Signed permutations are reprented using two components: a regular permutation `Equiv.Perm (Fin n)`
 and a `SignFunction n`:=`Fin n → Sign`. -/
+@[ext]
 structure SignedPermutation (n : ℕ) where
   values : Equiv.Perm (Fin n)
   signs : SignFunction n
@@ -272,11 +273,17 @@ end SignedPermutation
 def IsSortedUpTo {n : ℕ} (π : SignedPermutation n) (k : ℕ) : Prop :=
   ∀ (i : Fin n), i < k → π.values i = i ∧ π.signs i = Sign.positive
 
-def isSortedUpTo_implies_isSortedUpTo_smaller {n : ℕ} (π : SignedPermutation n)
-    {k : ℕ} (isSortedUpTo_k : IsSortedUpTo π k) {i : ℕ} (i_lt_k : i < k) :
+lemma isSortedUpTo_implies_isSortedUpTo_smaller {n : ℕ} {π : SignedPermutation n}
+    {k : ℕ} (isSortedUpTo_k : IsSortedUpTo π k) {i : ℕ} (i_le_k : i ≤ k) :
     IsSortedUpTo π i := by
-  intro l l_lt_k
-  exact isSortedUpTo_k l (Nat.lt_trans l_lt_k i_lt_k)
+  intro l l_le_k
+  exact isSortedUpTo_k l (Nat.le_trans l_le_k i_le_k)
+
+lemma isSortedUpTo_n_impies_isSortedUpTo {n : ℕ} {π : SignedPermutation n}
+    (isSortedUpTo_n : IsSortedUpTo π n) (k : ℕ) :
+    IsSortedUpTo π k := by
+  intro i _
+  exact isSortedUpTo_n i i.isLt
 
 /-- For a `SignedPermutation` that is sorted up to exclusively index k,
 construct a list of one or two reversals σ₁(, σ₂) s.t. πσ₁(σ₂) is sorted up to index k. -/
@@ -448,7 +455,7 @@ def everyPermutationSortedUpToZero {n : ℕ} {π : SignedPermutation n} :
 
 
 def fromK {n : ℕ} (π : SignedPermutation n) (k : ℕ) :
-(k_sorting_reversals π k) :=
+    (k_sorting_reversals π k) :=
   if case_n : n = 0 then
     {
       reversals := []
@@ -465,9 +472,16 @@ def fromK {n : ℕ} (π : SignedPermutation n) (k : ℕ) :
       exact everyPermutationSortedUpToZero
     }
   else if case_k' : k > n then
-    sorry
+    let previous := fromK π (k-1)
+    {
+      reversals := previous.reversals
+      sorts_up_to_k := by
+        have : n ≤ k - 1 := Nat.le_sub_one_of_lt case_k'
+        have := isSortedUpTo_implies_isSortedUpTo_smaller previous.sorts_up_to_k this
+        exact isSortedUpTo_n_impies_isSortedUpTo this k
+    }
   else
-    let previous:= fromK π (k-1)
+    let previous := fromK π (k-1)
     let previous_permutation := previous.reversals.foldl
       SignedPermutation.applyReversal π
 
@@ -496,20 +510,22 @@ def fromK {n : ℕ} (π : SignedPermutation n) (k : ℕ) :
 
 end k_sorting_reversals
 
-private def recursive_simple_sort {n : ℕ} (π : SignedPermutation n) (k : ℕ)
-    (sorting_reversals : k_sorting_reversals π k) :
-    if k = n then k_sorting_reversals π n else k_sorting_reversals π (k + 1) :=
-  sorry
 
 def simple_sort_by_signed_permutations {n : ℕ} (π : SignedPermutation (n := n)) :
-    k_sorting_reversals π n := sorry
+    k_sorting_reversals π n := k_sorting_reversals.fromK π n
+
 
 lemma simple_sort_sorts {n : ℕ} (π : SignedPermutation n)
-    (k_sorting_reversals : k_sorting_reversals π n) :
-    (k_sorting_reversals.reversals.foldl SignedPermutation.applyReversal π) =
-    SignedPermutation.identity n := sorry
-
-
+    (sorting_reversal : k_sorting_reversals π n) :
+    (sorting_reversal.reversals.foldl SignedPermutation.applyReversal π) =
+    SignedPermutation.identity n := by
+  ext i
+  · rw [(sorting_reversal.sorts_up_to_k i i.is_lt).1]
+    unfold SignedPermutation.identity
+    rfl
+  · rw [(sorting_reversal.sorts_up_to_k i i.is_lt).2]
+    unfold SignedPermutation.identity
+    rfl
 
 
 /-- For every `SignedPermutation` exists a sequence of `Reversal`s that "sorts" it,
@@ -517,7 +533,8 @@ i.e. transforms it into the signed identity permutation. -/
 theorem SignedPermutation.sortable {n : ℕ} (π : SignedPermutation (n := n)) :
     ∃ reversals : List (Reversal (n := n)),
     (SignedPermutation.identity n) = (reversals.foldl SignedPermutation.applyReversal π) := by
-  sorry
+  use (simple_sort_by_signed_permutations π).reversals
+  exact Eq.symm (simple_sort_sorts π (simple_sort_by_signed_permutations π))
 
 
 

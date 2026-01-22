@@ -2,6 +2,7 @@ import SSPRHannenhalliPevznerTheory.Basic
 import SSPRHannenhalliPevznerTheory.Graphs.Basic
 import SSPRHannenhalliPevznerTheory.DisjointCycles
 import SSPRHannenhalliPevznerTheory.SignedPermutation.Basic
+import Mathlib.Combinatorics.SimpleGraph.LapMatrix
 
 
 namespace SSPRHannenhalliPevznerTheory
@@ -41,8 +42,32 @@ instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   dsimp only [fromPermutationDirect, fromPermutation, isConsecutive.eq_1]
   exact instDecidableAnd
 
+
+
 lemma deg_le_two {n : ℕ} (σ : Equiv.Perm (Fin n)) :
-    ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex ≤ 2 := by sorry
+    ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex ≤ 2 := by
+  intro vertex
+  rw [← ENat.coe_le_coe]
+  rw [Nat.cast_two]
+
+  --unfold SimpleGraph.Adj
+  unfold fromPermutation fromPermutationDirect
+  dsimp
+  unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
+  dsimp
+  have : {w | (↑vertex = ↑w + 1 ∨ ↑w = ↑vertex + 1) ∧
+      ¬(↑((addFrameToPermutation σ) vertex) = ↑((addFrameToPermutation σ) w) + 1 ∨
+      ↑((addFrameToPermutation σ) w) = ↑((addFrameToPermutation σ) vertex) + 1)} ⊆
+      {w | (↑vertex = ↑w + 1 ∨ ↑w = ↑vertex + 1)} :=
+    Set.sep_subset (fun x ↦ vertex = x + 1 ∨ x = vertex + 1) fun x ↦
+      ¬((addFrameToPermutation σ) vertex = (addFrameToPermutation σ) x + 1 ∨
+          (addFrameToPermutation σ) x = (addFrameToPermutation σ) vertex + 1)
+
+
+  #check Finset.card_le_card
+
+
+  sorry
 
 lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex =
