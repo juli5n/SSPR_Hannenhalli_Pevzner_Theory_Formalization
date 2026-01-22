@@ -1,6 +1,7 @@
 import Mathlib.Logic.Equiv.Defs
 import Mathlib.GroupTheory.Perm.Basic
 import Mathlib.Data.Nat.Find
+import Mathlib.Data.Nat.Cast.Order.Basic
 
 namespace SSPRHannenhalliPevznerTheory
 
@@ -268,18 +269,6 @@ lemma reversal_passes_sign_outside_range {n : ℕ} (π : SignedPermutation n)
 
 end SignedPermutation
 
-section
-variable {n : ℕ}
-{unsigned_permutation : Equiv.Perm (Fin n)}
-{signed_permutation : SignedPermutation (n := n)}
-{reversal : Reversal (n := n)}
-
-#check (reversal • unsigned_permutation)
-#check (reversal • signed_permutation)
-#check unsigned_permutation.invFun
-
-end
-
 def IsSortedUpTo {n : ℕ} (π : SignedPermutation n) (k : ℕ) : Prop :=
   ∀ (i : Fin n), i < k → π.values i = i ∧ π.signs i = Sign.positive
 
@@ -291,8 +280,7 @@ def isSortedUpTo_implies_isSortedUpTo_smaller {n : ℕ} (π : SignedPermutation 
 
 /-- For a `SignedPermutation` that is sorted up to exclusively index k,
 construct a list of one or two reversals σ₁(, σ₂) s.t. πσ₁(σ₂) is sorted up to index k. -/
-
-def sortingStep {n : ℕ} (π : SignedPermutation n) (k : Fin n)
+def sortingStep {n : ℕ} (π : SignedPermutation n) {k : Fin n}
     (first_k_sorted : IsSortedUpTo π k) :
     List (Reversal (n := n)) :=
   let start_index : Fin n := k
@@ -326,16 +314,16 @@ def sortingStep {n : ℕ} (π : SignedPermutation n) (k : Fin n)
     ]
 
 
-theorem sortingStep_sorts {n : ℕ} (π : SignedPermutation n) (k : Fin n)
+theorem sortingStep_sorts {n : ℕ} (π : SignedPermutation n) {k : Fin n}
     (first_k_sorted : IsSortedUpTo π k) :
-    IsSortedUpTo ((sortingStep π k first_k_sorted).foldl SignedPermutation.applyReversal π)
+    IsSortedUpTo ((sortingStep π first_k_sorted).foldl SignedPermutation.applyReversal π)
     (k + 1) := by
   intro i i_lt_k_plus_1
 
   let ρ : Reversal (n := n) :={
     start_index := k,
     end_index := (Equiv.symm π.values) k,
-    start_index_le_end_index := sortingStep._proof_1 π k first_k_sorted
+    start_index_le_end_index := sortingStep._proof_1 π first_k_sorted
     }
   have ρ_start_eq_k : ρ.start_index = k := rfl
   have ρ_end_eq_def : ρ.end_index = (Equiv.symm π.values) k := rfl
@@ -349,7 +337,7 @@ theorem sortingStep_sorts {n : ℕ} (π : SignedPermutation n) (k : Fin n)
   let k_k_reversal : Reversal := {
     start_index := k,
     end_index := k,
-    start_index_le_end_index := sortingStep._proof_3 k
+    start_index_le_end_index := sortingStep._proof_3
   }
   have k_k_end_eq_k : k_k_reversal.end_index = k := rfl
   have k_k_start_eq_k : k_k_reversal.start_index = k := rfl
@@ -383,8 +371,7 @@ theorem sortingStep_sorts {n : ℕ} (π : SignedPermutation n) (k : Fin n)
         rw [Equiv.apply_symm_apply π.values k] at this
         exact this
       · rw [i_eq_k]
-        rw [SignedPermutation.reversal_flips_sign_in_range π ρ k k_in_range]
-        rw [SignedPermutation.reversal_flips_sign_in_range π ρ k k_in_range] at π_apply_ρ_sign
+        rw [SignedPermutation.reversal_flips_sign_in_range π ρ k k_in_range] at ⊢ π_apply_ρ_sign
         exact π_apply_ρ_sign
     · dsimp
       rw [i_eq_k] at *
@@ -446,9 +433,73 @@ structure k_sorting_reversals {n : ℕ} (π : SignedPermutation n) (k : ℕ) whe
   reversals : List (Reversal (n := n))
   sorts_up_to_k : IsSortedUpTo (reversals.foldl SignedPermutation.applyReversal π) k
 
+namespace k_sorting_reversals
+
+def emptyPermutationIsSorted (π : SignedPermutation 0) {k : ℕ} :
+  IsSortedUpTo π k := by
+  intro i i_lt_k
+  have := Fin.isEmpty.false i
+  contradiction
+
+def everyPermutationSortedUpToZero {n : ℕ} {π : SignedPermutation n} :
+  IsSortedUpTo π 0 := by
+  intro i i_lt_zero
+  omega
+
+
+def fromK {n : ℕ} (π : SignedPermutation n) (k : ℕ) :
+(k_sorting_reversals π k) :=
+  if case_n : n = 0 then
+    {
+      reversals := []
+      sorts_up_to_k := by
+        rw [@List.foldl_nil]
+        subst case_n
+        exact emptyPermutationIsSorted π
+    }
+  else if case_k : k = 0 then
+    {
+    reversals := []
+    sorts_up_to_k := by
+      rw [case_k]
+      exact everyPermutationSortedUpToZero
+    }
+  else if case_k' : k > n then
+    sorry
+  else
+    let previous:= fromK π (k-1)
+    let previous_permutation := previous.reversals.foldl
+      SignedPermutation.applyReversal π
+
+    let additional_reversals:= (@sortingStep
+      n
+      previous_permutation
+      ⟨k-1, by omega⟩
+      previous.sorts_up_to_k
+    )
+
+    {
+    reversals := previous.reversals ++ additional_reversals
+    sorts_up_to_k := by
+      rw [@List.foldl_append]
+      have := @sortingStep_sorts
+        n
+        previous_permutation
+        ⟨k-1, by omega⟩
+        previous.sorts_up_to_k
+      rw [show (k - 1 + 1 = k) by omega] at this
+      exact this
+    }
+
+
+
+
+end k_sorting_reversals
+
 private def recursive_simple_sort {n : ℕ} (π : SignedPermutation n) (k : ℕ)
     (sorting_reversals : k_sorting_reversals π k) :
-    if k = n then k_sorting_reversals π n else k_sorting_reversals π (k + 1) := sorry
+    if k = n then k_sorting_reversals π n else k_sorting_reversals π (k + 1) :=
+  sorry
 
 def simple_sort_by_signed_permutations {n : ℕ} (π : SignedPermutation (n := n)) :
     k_sorting_reversals π n := sorry
@@ -457,6 +508,8 @@ lemma simple_sort_sorts {n : ℕ} (π : SignedPermutation n)
     (k_sorting_reversals : k_sorting_reversals π n) :
     (k_sorting_reversals.reversals.foldl SignedPermutation.applyReversal π) =
     SignedPermutation.identity n := sorry
+
+
 
 
 /-- For every `SignedPermutation` exists a sequence of `Reversal`s that "sorts" it,
