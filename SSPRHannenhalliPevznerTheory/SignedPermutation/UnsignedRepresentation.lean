@@ -397,7 +397,7 @@ theorem UnsignedRepresentationOfSP.image_toggleLSB_eq_of_image_odd
   exact this
 
 theorem UnsignedRepresentationOfSP.div_two_eq_toggleLSB_div_two
-  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2*n)):
+  {n : ℕ} (representation : UnsignedRepresentationOfSP (n := n)) (x : Fin (2 * n)):
   (representation x).val / 2 = (representation (toggleLSB x)).val / 2 := by
 
   sorry
