@@ -47,31 +47,76 @@ instance {n : ℕ} (σ : Equiv.Perm (Fin n)) :
 lemma deg_le_two {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex ≤ 2 := by
   intro vertex
-  rw [← ENat.coe_le_coe]
-  rw [Nat.cast_two]
-
-  --unfold SimpleGraph.Adj
   unfold fromPermutation fromPermutationDirect
   dsimp
   unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
   dsimp
-  have : {w | (↑vertex = ↑w + 1 ∨ ↑w = ↑vertex + 1) ∧
-      ¬(↑((addFrameToPermutation σ) vertex) = ↑((addFrameToPermutation σ) w) + 1 ∨
-      ↑((addFrameToPermutation σ) w) = ↑((addFrameToPermutation σ) vertex) + 1)} ⊆
-      {w | (↑vertex = ↑w + 1 ∨ ↑w = ↑vertex + 1)} :=
-    Set.sep_subset (fun x ↦ vertex = x + 1 ∨ x = vertex + 1) fun x ↦
-      ¬((addFrameToPermutation σ) vertex = (addFrameToPermutation σ) x + 1 ∨
-          (addFrameToPermutation σ) x = (addFrameToPermutation σ) vertex + 1)
+  have : {w | (vertex.val = w.val + 1 ∨ w.val = vertex.val + 1) ∧
+      ¬(((addFrameToPermutation σ) vertex).val = ((addFrameToPermutation σ) w).val + 1 ∨
+      ((addFrameToPermutation σ) w).val = ((addFrameToPermutation σ) vertex).val + 1)} ⊆
+      {w | (vertex.val = w.val + 1 ∨ w.val = vertex.val + 1)} := by
+    simp only [not_or, Set.setOf_subset_setOf, and_imp]
+    exact fun a a_1 a_2 a_3 ↦ a_1
+  have := Set.toFinset_mono this
+  grw [this]
+  simp only [Set.toFinset_setOf, ge_iff_le]
+  rw [Finset.filter_or]
+  grw [Finset.card_union_le]
+  simp_rw [show (2 : ℕ) = 1 + 1 from rfl]
+  gcongr
+  · rw [Finset.card_le_one_iff_subset_singleton]
+    use vertex - 1
+    rw [Finset.subset_singleton_iff']
+    intro x x_elem
+    rw [Finset.mem_filter_univ x] at x_elem
+    by_cases one_le_vertex : 1 ≤ vertex.val
+    · rw [Nat.Simproc.eq_add_le ↑x one_le_vertex] at x_elem
+      rw [Fin.ext_iff]
+      rw [Fin.val_sub_one_of_ne_zero ?_]
+      · exact x_elem
+      · rw [Fin.ne_iff_vne]
+        exact Ne.symm (Nat.ne_of_lt one_le_vertex)
+    · rw [Nat.not_le,Nat.lt_one_iff] at one_le_vertex
+      have : vertex = 0 := Fin.eq_of_val_eq one_le_vertex
+      rw [this]
+      simp only [zero_sub]
+      omega
+  · rw [Finset.card_le_one_iff_subset_singleton]
+    by_cases vertex_last : vertex = Fin.last (n + 1)
+    · rw [← Fin.natCast_eq_last (n + 1)] at vertex_last
+      rw [Fin.ext_iff] at vertex_last
+      rw [vertex_last]
+      use 0
+      rw [Finset.subset_singleton_iff']
+      intro x x_elem
+      rw [Finset.mem_filter_univ x] at x_elem
+      rw [Fin.val_cast_of_lt (Nat.lt_add_one (n + 1))] at x_elem
+      have : x.val < n + 1 + 1 := x.isLt
+      exact False.elim ((Nat.ne_of_lt this) x_elem)
+    · use vertex + 1
+      rw [Finset.subset_singleton_iff']
+      intro x x_elem
+      rw [Finset.mem_filter_univ x] at x_elem
+      apply Fin.eq_of_val_eq
+      rw[x_elem]
+      rw [Fin.val_add_one]
+      simp only [vertex_last, ↓reduceIte]
 
-
-  #check Finset.card_le_card
-
-
+lemma add_frame_map_inner_inner {n : ℕ} (σ : Equiv.Perm (Fin n)) {i : Fin (n + 2)}
+    (i_inner : 0 < i ∧ i < n + 1) :
+    0 < (addFrameToPermutation σ i) ∧ (addFrameToPermutation σ i) < n + 1 := by
   sorry
 
 lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex =
-    (fromPermutation σ).grayEdgesGraph.degree vertex := by sorry
+    (fromPermutation σ).grayEdgesGraph.degree vertex := by
+  intro vertex
+  unfold fromPermutation fromPermutationDirect
+  dsimp
+  unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
+  --apply Finset.card_bijective
+
+  sorry
 
 
 
