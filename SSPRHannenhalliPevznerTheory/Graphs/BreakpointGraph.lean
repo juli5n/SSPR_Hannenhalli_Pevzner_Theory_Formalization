@@ -107,6 +107,8 @@ lemma add_frame_map_inner_inner {n : ℕ} (σ : Equiv.Perm (Fin n)) {i : Fin (n 
     0 < (addFrameToPermutation σ i) ∧ (addFrameToPermutation σ i) < n + 1 := by
   sorry
 
+def black_to_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) : sorry := sorry
+
 lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex =
     (fromPermutation σ).grayEdgesGraph.degree vertex := by
@@ -115,7 +117,7 @@ lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   dsimp
   unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
   --apply Finset.card_bijective
-
+  #check Finset.card_bij'
   sorry
 
 
