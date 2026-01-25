@@ -102,23 +102,63 @@ lemma deg_le_two {n : ℕ} (σ : Equiv.Perm (Fin n)) :
       rw [Fin.val_add_one]
       simp only [vertex_last, ↓reduceIte]
 
+-- maybe unnecessary
 lemma add_frame_map_inner_inner {n : ℕ} (σ : Equiv.Perm (Fin n)) {i : Fin (n + 2)}
     (i_inner : 0 < i ∧ i < n + 1) :
     0 < (addFrameToPermutation σ i) ∧ (addFrameToPermutation σ i) < n + 1 := by
   sorry
 
-def black_to_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) : sorry := sorry
+def black_to_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) (base : Fin (n + 2)) (i : Fin (n + 2))
+    (_ : i ∈
+      {w |
+          (base.val = w.val + 1 ∨ w.val = base.val + 1) ∧
+            ¬((addFrameToPermutation σ base).val = (addFrameToPermutation σ w).val + 1 ∨
+                (addFrameToPermutation σ w).val = (addFrameToPermutation σ base).val + 1)
+      }.toFinset) : Fin (n + 2) :=
+  let σ' := addFrameToPermutation σ
+  if i = base - 1
+  then
+    if base + 1 ≠ σ'.invFun ((σ' base) - 1)
+    then σ'.invFun ((σ' base) - 1)
+    else σ'.invFun ((σ' base) + 1)
+  else
+    if base - 1 ≠ σ'.invFun ((σ' base) + 1)
+    then σ'.invFun ((σ' base) + 1)
+    else σ'.invFun ((σ' base) - 1)
+
+def gray_to_black {n : ℕ} (σ : Equiv.Perm (Fin n)) (base : Fin (n + 2)) (j : Fin (n + 2))
+    (_ : j ∈
+      {w |
+          ((addFrameToPermutation σ base).val = (addFrameToPermutation σ w).val + 1 ∨
+              (addFrameToPermutation σ w).val =
+                (addFrameToPermutation σ base).val + 1) ∧
+            ¬(base.val = w.val + 1 ∨ w.val = base.val + 1)
+      }.toFinset) : Fin (n + 2) :=
+  let σ' := addFrameToPermutation σ
+  if j = σ'.invFun ((σ' base) - 1)
+  then
+    if base + 1 ≠ σ'.invFun ((σ' base) - 1)
+    then base - 1
+    else base + 1
+  else
+    if base - 1 ≠ σ'.invFun ((σ' base) + 1)
+    then base + 1
+    else base - 1
+
 
 lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
-    ∀ (vertex : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree vertex =
-    (fromPermutation σ).grayEdgesGraph.degree vertex := by
-  intro vertex
+    ∀ (base : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree base =
+    (fromPermutation σ).grayEdgesGraph.degree base := by
+  intro base
   unfold fromPermutation fromPermutationDirect
   dsimp
   unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
-  --apply Finset.card_bijective
-  #check Finset.card_bij'
-  sorry
+  dsimp
+  apply Finset.card_bij' (i := black_to_gray σ base) (j := gray_to_black σ base)
+  · sorry
+  · sorry
+  · sorry
+  · sorry
 
 
 
