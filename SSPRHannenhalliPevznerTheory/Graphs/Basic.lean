@@ -98,5 +98,25 @@ def addFrameToPermutation {n : ℕ} (permutation : Equiv.Perm (Fin n)) :
         omega
   }
 
+namespace addFrameToPermutation
+
+lemma maps_inner_inner {n : ℕ} (σ : Equiv.Perm (Fin n)) {i : Fin (n + 2)}
+    (i_inner : 1 ≤ i ∧ i ≤ n) :
+    1 ≤ (addFrameToPermutation σ i) ∧ (addFrameToPermutation σ i) ≤ n := by
+  sorry
+
+lemma maps_last_last {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    (addFrameToPermutation σ ⟨n + 1, Nat.lt_add_one (n + 1)⟩) = ⟨n + 1, Nat.lt_add_one (n + 1)⟩ := by
+  sorry
+
+lemma maps_first_first {n : ℕ} (σ : Equiv.Perm (Fin n)) :
+    (addFrameToPermutation σ ⟨0, Nat.zero_lt_succ (n + 1)⟩) = ⟨0, Nat.zero_lt_succ (n + 1)⟩ := by
+  sorry
+
+lemma commutes_with_inv {n : ℕ} {σ : Equiv.Perm (Fin n)} :
+    Equiv.symm (addFrameToPermutation σ) = addFrameToPermutation (Equiv.symm σ) := by
+  sorry
+
+end addFrameToPermutation
 
 end SSPRHannenhalliPevznerTheory

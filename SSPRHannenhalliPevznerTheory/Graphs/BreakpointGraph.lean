@@ -102,11 +102,8 @@ lemma deg_le_two {n : ℕ} (σ : Equiv.Perm (Fin n)) :
       rw [Fin.val_add_one]
       simp only [vertex_last, ↓reduceIte]
 
--- maybe unnecessary
-lemma add_frame_map_inner_inner {n : ℕ} (σ : Equiv.Perm (Fin n)) {i : Fin (n + 2)}
-    (i_inner : 0 < i ∧ i < n + 1) :
-    0 < (addFrameToPermutation σ i) ∧ (addFrameToPermutation σ i) < n + 1 := by
-  sorry
+
+
 
 def black_to_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) (base : Fin (n + 2)) (i : Fin (n + 2))
     (_ : i ∈
@@ -145,7 +142,47 @@ def gray_to_black {n : ℕ} (σ : Equiv.Perm (Fin n)) (base : Fin (n + 2)) (j : 
     then base + 1
     else base - 1
 
+noncomputable def myPerm : Equiv.Perm (Fin 3) :=
+  Equiv.ofBijective
+    ![2, 1, 0]  -- Die explizite Abbildung
+    (by decide)
 
+example : (fromPermutation myPerm).blackEdgesGraph.degree 4 =
+    (fromPermutation myPerm).grayEdgesGraph.degree 4 := by
+  unfold fromPermutation fromPermutationDirect
+  dsimp
+  unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
+  dsimp
+  apply Finset.card_bij' (i := black_to_gray myPerm 4) (j := gray_to_black myPerm 4)
+  · intro i i_black_adj
+    simp only [not_or, Set.toFinset_setOf, Finset.mem_filter, Finset.mem_univ,
+      true_and] at i_black_adj
+    unfold gray_to_black black_to_gray
+    simp
+    by_cases hi : i = 3
+    · simp [hi]
+      unfold myPerm addFrameToPermutation
+      simp
+    · simp [hi]
+      unfold myPerm addFrameToPermutation
+      simp
+      have : ((4 : Fin 5) + 1 = 0) := by
+        dsimp only [Fin.reduceAdd]
+
+      sorry
+  · sorry
+  · sorry
+  · sorry
+
+
+
+/-a = (Equiv.symm (addFrameToPermutation σ)) ((addFrameToPermutation σ) b)
+↔ ((addFrameToPermutation σ) a) = ((addFrameToPermutation σ) b)
+↔ a = b
+-/
+
+
+--set_option pp.coercions false
 lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
     ∀ (base : Fin (n + 2)), (fromPermutation σ).blackEdgesGraph.degree base =
     (fromPermutation σ).grayEdgesGraph.degree base := by
@@ -155,7 +192,107 @@ lemma deg_black_eq_deg_gray {n : ℕ} (σ : Equiv.Perm (Fin n)) :
   unfold SimpleGraph.degree SimpleGraph.neighborFinset SimpleGraph.neighborSet
   dsimp
   apply Finset.card_bij' (i := black_to_gray σ base) (j := gray_to_black σ base)
-  · sorry
+  · intro i i_black_adj
+    simp only [not_or, Set.toFinset_setOf, Finset.mem_filter, Finset.mem_univ,
+      true_and] at i_black_adj
+    unfold gray_to_black black_to_gray
+    simp only [Equiv.invFun_as_coe, ne_eq, ite_not]
+    obtain base_eq_succ_i | i_eq_succ_base := i_black_adj.1
+    · have one_le_base : 1 ≤ base.val := by omega
+      rw [Nat.Simproc.eq_add_le i.val one_le_base] at base_eq_succ_i
+      rw [← Fin.val_sub_one_of_ne_zero ?_] at base_eq_succ_i
+      · rw [Fin.val_inj] at base_eq_succ_i
+        simp only [base_eq_succ_i, ↓reduceIte, ite_eq_right_iff, EmbeddingLike.apply_eq_iff_eq]
+        by_cases succ_base_eq :
+          base + 1 = (Equiv.symm (addFrameToPermutation σ)) ((addFrameToPermutation σ) base - 1)
+        · simp only [succ_base_eq, forall_const, ↓reduceIte]
+          by_cases base_last : base = ⟨n + 1, Nat.lt_add_one (n + 1)⟩
+          · simp only [base_last]
+            simp only [addFrameToPermutation.maps_last_last]
+            simp only [addFrameToPermutation.commutes_with_inv]
+            have pred_succ_n_eq_n : (⟨n + 1, Nat.lt_add_one (n + 1)⟩ : Fin (n + 2)) - 1 =
+                ⟨n, by simp only [lt_add_iff_pos_right, Nat.ofNat_pos]⟩ := by
+              rw [Fin.eq_mk_iff_val_eq]
+              rw [Fin.val_sub_one_of_ne_zero (Ne.symm (not_eq_of_beq_eq_false rfl))]
+              rfl
+            rw [pred_succ_n_eq_n]
+            have succ_succ_n_eq_0:
+                (⟨ n + 1, Nat.lt_add_one (n + 1)⟩ : Fin (n + 2)) + 1 = 0 := by
+              rw [Fin.eq_mk_iff_val_eq]
+
+              rw [Fin.val_add ⟨n + 1, Nat.lt_add_one (n + 1)⟩ 1]
+              norm_num
+            rw [succ_succ_n_eq_0]
+
+            by_cases n_eq_0 : (0 : Fin (n + 2)) = ⟨ n, by omega⟩
+            · simp only [n_eq_0, ↓reduceIte]
+              rw [← n_eq_0]
+              exact addFrameToPermutation.maps_first_first (Equiv.symm σ)
+            · simp only [Fin.zero_eq_mk] at n_eq_0
+              rw [base_last, succ_succ_n_eq_0, Equiv.eq_symm_apply (addFrameToPermutation σ),
+                ← Fin.mk_zero' (n + 2), addFrameToPermutation.maps_first_first σ,
+                addFrameToPermutation.maps_last_last σ, pred_succ_n_eq_n, Fin.ext_iff
+              ] at succ_base_eq
+              dsimp at succ_base_eq
+              exact False.elim (n_eq_0 succ_base_eq.symm)
+          · set σ' := addFrameToPermutation σ with σ'_def
+            by_cases n_eq_0 : 0 = n
+            · have succ_eq_pred (x : Fin (n + 2)) : x + 1 = x - 1 := by
+                rw [eq_sub_iff_add_eq]
+                rw [add_assoc]
+                norm_num
+                rw [Fin.add_def 1 1]
+                norm_num
+                rw [← n_eq_0]
+              simp only [succ_eq_pred (σ' base), ↓reduceIte]
+              nth_rw 1 [Equiv.symm_apply_eq σ']
+              have one_eq_succ_n : @OfNat.ofNat (Fin (n + 2)) 1 Fin.instOfNat =
+                    ⟨n+1, Nat.lt_add_one (n + 1)⟩ := by
+                rw [Fin.ext_iff]
+                dsimp
+                rw [← n_eq_0]
+              by_cases base_eq_0 : base = 0
+              · rw [base_eq_0]
+                rw [σ'_def]
+                nth_rw 1 [← Fin.mk_zero' (n + 2)]
+                rw [addFrameToPermutation.maps_first_first σ]
+                rw [← succ_eq_pred 0]
+                norm_num
+                have := addFrameToPermutation.maps_last_last σ
+
+                rw [← one_eq_succ_n] at this
+                rw [this]
+                rw [← add_right_inj 0]
+                rw [succ_eq_pred 0]
+                norm_num
+              · have base_eq_1 : base = 1 := by grind
+                rw [base_eq_1]
+                norm_num
+                rw [σ'_def]
+                rw [show (addFrameToPermutation σ) 0 = 0 from rfl]
+                have := addFrameToPermutation.maps_last_last σ
+                rw [← one_eq_succ_n] at this
+                rw [this]
+                norm_num
+            · have succ_neq_pred (x : Fin (n + 2)) : ¬ (x + 1) = (x - 1) := by
+                rw [eq_sub_iff_add_eq]
+                rw [add_assoc]
+                norm_num
+                rw [show 1 + 1 = Fin.add 1 1 from rfl]
+                unfold Fin.add
+                norm_num
+                rw [@Nat.succ_mod_succ_eq_zero_iff]
+                norm_num
+                exact fun a ↦ n_eq_0 (id (Eq.symm a))
+              simp only [succ_neq_pred, ↓reduceIte, ite_eq_left_iff]
+              intro pred_base_neq
+              rw [Equiv.symm_apply_eq σ']
+              rw [Equiv.eq_symm_apply σ'] at succ_base_eq pred_base_neq
+
+              sorry
+        · sorry
+      · exact Ne.symm (Fin.ne_of_lt one_le_base)
+    · sorry
   · sorry
   · sorry
   · sorry
