@@ -26,12 +26,14 @@ is associated with a sign (+ or -). For example a signed permutation
 could be something like $(+1, -2, +4, +3)$.
 
 A reversal $\rho(i,j)$ with $1 \leq i \leq j \leq n$ for a permutation of size n is the permutation 
+
 $$
 \begin{pmatrix}
 1 & \dots & i-1 & i & i+1 & \dots & j-1 & j & j+1 & \dots & n \\
 1 & \dots & i-1 & j & j-1 & \dots & i+1 & i & j+1 & \dots & n \\
 \end{pmatrix}
 $$
+
 Composing a reversal $\rho(i,j)$ with an (unsigned) permutation π has the effect of 
 reversing the order of the elements
 $π_i, ...,π_j$. The notion of a reversal is extended to signed permutations through the following:
